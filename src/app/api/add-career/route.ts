@@ -24,58 +24,77 @@ export async function POST(request: Request) {
       country,
       province,
       employmentType,
+      
+      // for drafts
+      currentStep,
+      completedSteps,
     } = await request.json();
-    // Validate required fields
-    if (!jobTitle || !description || !questions || !location || !workSetup) {
-      return NextResponse.json(
-        {
-          error:
-            "Job title, description, questions, location and work setup are required",
-        },
-        { status: 400 }
-      );
+
+    // Conditional validation based on status
+    if (status === "draft") {
+      // For drafts, only require job title (minimum data to create a draft)
+      if (!jobTitle?.trim()) {
+        return NextResponse.json(
+          { error: "Job title is required to create a draft" },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Full validation for active/inactive (published/unpublished)
+      if (!jobTitle || !description || !questions || !location || !workSetup) {
+        return NextResponse.json(
+          {
+            error:
+              "Job title, description, questions, location and work setup are required",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const { db } = await connectMongoDB();
 
-    const orgDetails = await db.collection("organizations").aggregate([
-      {
-        $match: {
-          _id: new ObjectId(orgID)
-        }
-      },
-      {
-        $lookup: {
-            from: "organization-plans",
-            let: { planId: "$planId" },
-            pipeline: [
-                {
-                    $addFields: {
-                        _id: { $toString: "$_id" }
-                    }
-                },
-                {
-                    $match: {
-                        $expr: { $eq: ["$_id", "$$planId"] }
-                    }
-                }
-            ],
-            as: "plan"
-        }
-      },
-      {
-        $unwind: "$plan"
-      },
-    ]).toArray();
+    // Only check job limits if publishing (not for drafts)
+    if (status === "active") {
+      const orgDetails = await db.collection("organizations").aggregate([
+        {
+          $match: {
+            _id: new ObjectId(orgID)
+          }
+        },
+        {
+          $lookup: {
+              from: "organization-plans",
+              let: { planId: "$planId" },
+              pipeline: [
+                  {
+                      $addFields: {
+                          _id: { $toString: "$_id" }
+                      }
+                  },
+                  {
+                      $match: {
+                          $expr: { $eq: ["$_id", "$$planId"] }
+                      }
+                  }
+              ],
+              as: "plan"
+          }
+        },
+        {
+          $unwind: "$plan"
+        },
+      ]).toArray();
 
-    if (!orgDetails || orgDetails.length === 0) {
-      return NextResponse.json({ error: "Organization not found" }, { status: 404 });
-    }
+      if (!orgDetails || orgDetails.length === 0) {
+        return NextResponse.json({ error: "Organization not found" }, { status: 404 });
+      }
 
-    const totalActiveCareers = await db.collection("careers").countDocuments({ orgID, status: "active" });
+      const totalActiveCareers = await db.collection("careers").countDocuments({ orgID, status: "active" });
 
-    if (totalActiveCareers >= (orgDetails[0].plan.jobLimit + (orgDetails[0].extraJobSlots || 0))) {
-      return NextResponse.json({ error: "You have reached the maximum number of jobs for your plan" }, { status: 400 });
+      if (totalActiveCareers >= (orgDetails[0].plan.jobLimit + (orgDetails[0].extraJobSlots || 0))) {
+        return NextResponse.json({ error: "You have reached the maximum number of jobs for your plan" }, { status: 400 });
+      }
     }
 
     const career = {
@@ -101,6 +120,11 @@ export async function POST(request: Request) {
       country,
       province,
       employmentType,
+      // Draft-specific fields
+      currentStep: currentStep || 1,
+      completedSteps: completedSteps || [],
+      isDraft: status === "draft",
+      lastModified: new Date(),
     };
 
     await db.collection("careers").insertOne(career);
