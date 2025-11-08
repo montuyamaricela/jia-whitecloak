@@ -12,6 +12,7 @@ import CareerFormHeader from './CareerFormHeader';
 import CareerInformationCard from './CareerInformationCard';
 import SettingsCard from './SettingsCard';
 import AdditionalInformationCard from './AdditionalInformationCard';
+import CareerDetailsAndTeamAccess from './CareerDetailsAndTeamAccess/CareerDetailsAndTeamAccess';
 
 export default function CareerForm({
   career,
@@ -89,6 +90,17 @@ export default function CareerForm({
   const [showSaveModal, setShowSaveModal] = useState('');
   const [isSavingCareer, setIsSavingCareer] = useState(false);
   const savingCareerRef = useRef(false);
+  const [members, setMembers] = useState<any[]>(
+    career?.teamMembers || []
+  );
+  const [availableMembers, setAvailableMembers] = useState<any[]>([]);
+
+  const currentUserData = {
+    id: user?.email,
+    name: user?.name,
+    email: user?.email,
+    avatar: user?.image,
+  };
 
   const isFormValid = () => {
     return (
@@ -263,6 +275,61 @@ export default function CareerForm({
     }
   };
 
+  const handleAddMember = (memberId: string) => {
+    const member = availableMembers.find((m) => m.id === memberId);
+    if (member) {
+      setMembers([...members, { ...member, role: 'Contributor' }]);
+    }
+  };
+
+  const handleRemoveMember = (memberId: string) => {
+    setMembers(members.filter((m) => m.id !== memberId));
+  };
+
+  const handleUpdateRole = (memberId: string, role: string) => {
+    setMembers(
+      members.map((m) => (m.id === memberId ? { ...m, role } : m))
+    );
+  };
+
+  useEffect(() => {
+    if (formType === 'add' && members.length === 0 && user) {
+      setMembers([
+        {
+          id: user.email,
+          name: user.name,
+          email: user.email,
+          avatar: user.image,
+          role: 'Job Owner',
+          isOwner: true,
+        },
+      ]);
+    }
+  }, [formType, user]);
+
+  useEffect(() => {
+    const fetchAvailableMembers = async () => {
+      if (!orgID) return;
+
+      try {
+        const response = await axios.get(`/api/search-members?orgID=${orgID}&limit=100`);
+        if (response.status === 200) {
+          const membersData = response.data.members.map((m: any) => ({
+            id: m._id?.toString() || m.email,
+            name: m.name,
+            email: m.email,
+            avatar: m.image,
+          }));
+          setAvailableMembers(membersData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch members:', error);
+      }
+    };
+
+    fetchAvailableMembers();
+  }, [orgID]);
+
   useEffect(() => {
     const parseProvinces = () => {
       setProvinceList(philippineCitiesAndProvinces.provinces);
@@ -305,81 +372,40 @@ export default function CareerForm({
           setShowEditModal?.(false);
         }}
       />
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          width: '100%',
-          gap: 16,
-          alignItems: 'flex-start',
-          marginTop: 16,
-        }}
-      >
-        <div
-          style={{
-            width: '60%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-          }}
-        >
-          <CareerInformationCard
-            jobTitle={jobTitle}
-            setJobTitle={setJobTitle}
-            description={description}
-            setDescription={setDescription}
-          />
 
-          <InterviewQuestionGeneratorV2
-            questions={questions}
-            setQuestions={(questions) => setQuestions(questions)}
-            jobTitle={jobTitle}
-            description={description}
-          />
-        </div>
+      <CareerDetailsAndTeamAccess
+        jobTitle={jobTitle}
+        setJobTitle={setJobTitle}
+        employmentType={employmentType}
+        setEmploymentType={setEmploymentType}
+        workSetup={workSetup}
+        setWorkSetup={setWorkSetup}
+        country={country}
+        setCountry={setCountry}
+        province={province}
+        setProvince={setProvince}
+        city={city}
+        setCity={setCity}
+        provinceList={provinceList}
+        setProvinceList={setProvinceList}
+        cityList={cityList}
+        setCityList={setCityList}
+        salaryNegotiable={salaryNegotiable}
+        setSalaryNegotiable={setSalaryNegotiable}
+        minimumSalary={minimumSalary}
+        setMinimumSalary={setMinimumSalary}
+        maximumSalary={maximumSalary}
+        setMaximumSalary={setMaximumSalary}
+        description={description}
+        setDescription={setDescription}
+        members={members}
+        availableMembers={availableMembers}
+        onAddMember={handleAddMember}
+        onRemoveMember={handleRemoveMember}
+        onUpdateRole={handleUpdateRole}
+        currentUser={currentUserData}
+      />
 
-        <div
-          style={{
-            width: '40%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-          }}
-        >
-          <SettingsCard
-            screeningSetting={screeningSetting}
-            setScreeningSetting={setScreeningSetting}
-            requireVideo={requireVideo}
-            setRequireVideo={setRequireVideo}
-          />
-
-          <AdditionalInformationCard
-            employmentType={employmentType}
-            setEmploymentType={setEmploymentType}
-            workSetup={workSetup}
-            setWorkSetup={setWorkSetup}
-            workSetupRemarks={workSetupRemarks}
-            setWorkSetupRemarks={setWorkSetupRemarks}
-            salaryNegotiable={salaryNegotiable}
-            setSalaryNegotiable={setSalaryNegotiable}
-            minimumSalary={minimumSalary}
-            setMinimumSalary={setMinimumSalary}
-            maximumSalary={maximumSalary}
-            setMaximumSalary={setMaximumSalary}
-            country={country}
-            setCountry={setCountry}
-            province={province}
-            setProvince={setProvince}
-            city={city}
-            setCity={setCity}
-            provinceList={provinceList}
-            setProvinceList={setProvinceList}
-            cityList={cityList}
-            setCityList={setCityList}
-          />
-        </div>
-      </div>
       {showSaveModal && (
         <CareerActionModal
           action={showSaveModal}
