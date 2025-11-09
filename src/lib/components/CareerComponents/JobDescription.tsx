@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import InterviewQuestionGeneratorV2 from './InterviewQuestionGeneratorV2';
 import { useAppContext } from '../../context/AppContext';
 import DirectInterviewLinkV2 from './DirectInterviewLinkV2';
-import CareerForm from './CareerForm/CareerForm';
+import CareerForm from './CareerForm/CareerFormOld';
 import CareerLink from './CareerLink';
 
 export default function JobDescription({

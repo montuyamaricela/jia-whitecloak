@@ -75,7 +75,7 @@ export default function TeamAccessCard({
     <div className='career-card'>
       <div className='card-heading'>
         <div className='heading-wrapper'>
-          <span className='heading-text'>3. Team Access</span>
+          <span className='heading-text'>5. Team Access</span>
         </div>
       </div>
       <div className='card-content'>

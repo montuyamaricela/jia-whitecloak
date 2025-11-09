@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import InterviewQuestionGeneratorV2 from '../InterviewQuestionGeneratorV2';
 import philippineCitiesAndProvinces from '../../../../../public/philippines-locations.json';
 import { candidateActionToast, errorToast } from '@/lib/Utils';
@@ -8,11 +9,17 @@ import { useAppContext } from '@/lib/context/AppContext';
 import axios from 'axios';
 import CareerActionModal from '../CareerActionModal';
 import FullScreenLoadingAnimation from '../FullScreenLoadingAnimation';
-import CareerFormHeader from './CareerFormHeader';
+import CareerFormStepActions from './CareerFormStepActions';
 import CareerInformationCard from './CareerInformationCard';
 import SettingsCard from './SettingsCard';
 import AdditionalInformationCard from './AdditionalInformationCard';
 import CareerDetailsAndTeamAccess from './CareerDetailsAndTeamAccess/CareerDetailsAndTeamAccess';
+import SegmentedFormLayout from './SegmentedFormLayout';
+import SegmentPlaceholder from './SegmentPlaceholder';
+import Tip from './CareerDetailsAndTeamAccess/Tip';
+import CVReviewSettingsCard from './CVReview/CVReviewSettingsCard';
+import PreScreeningQuestionsCard from './CVReview/PreScreeningQuestionsCard';
+import { hasStepData } from './careerFormSchema';
 
 export default function CareerForm({
   career,
@@ -24,6 +31,65 @@ export default function CareerForm({
   setShowEditModal?: (show: boolean) => void;
 }) {
   const { user, orgID } = useAppContext();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [stepErrors, setStepErrors] = useState<Record<number, boolean>>({});
+
+  const form = useForm({
+    defaultValues: {
+      jobTitle: career?.jobTitle || '',
+      description: career?.description || '',
+      employmentType: career?.employmentType || 'Full-Time',
+      workSetup: career?.workSetup || '',
+      country: career?.country || 'Philippines',
+      province: career?.province || '',
+      city: career?.location || '',
+      salaryNegotiable: career?.salaryNegotiable ?? true,
+      minimumSalary: career?.minimumSalary || '',
+      maximumSalary: career?.maximumSalary || '',
+      screeningSetting: career?.screeningSetting || 'Good Fit and Above',
+      secretPrompt: career?.secretPrompt || '',
+      preScreeningQuestions: career?.preScreeningQuestions || [],
+    },
+  });
+
+  type StepState =
+    | 'active-pending'
+    | 'active-in-progress'
+    | 'active-completed'
+    | 'inactive'
+    | 'pending-empty'
+    | 'error';
+
+  const getFormData = () => ({
+    jobTitle,
+    description,
+    workSetup,
+    province,
+    city,
+    secretPrompt,
+    preScreeningQuestions,
+    questions,
+  });
+
+  const getStepState = (stepIndex: number): StepState => {
+    if (stepErrors[stepIndex]) {
+      return 'error';
+    }
+
+    if (stepIndex === currentStep) {
+      const formData = getFormData();
+      return hasStepData(stepIndex, formData)
+        ? 'active-in-progress'
+        : 'active-pending';
+    }
+
+    if (stepIndex < currentStep) {
+      return 'active-completed';
+    }
+
+    return 'inactive';
+  };
+
   const [jobTitle, setJobTitle] = useState(career?.jobTitle || '');
   const [description, setDescription] = useState(career?.description || '');
   const [workSetup, setWorkSetup] = useState(career?.workSetup || '');
@@ -31,7 +97,11 @@ export default function CareerForm({
     career?.workSetupRemarks || ''
   );
   const [screeningSetting, setScreeningSetting] = useState(
-    career?.screeningSetting || 'Good Fit and above'
+    career?.screeningSetting || 'Good Fit and Above'
+  );
+  const [secretPrompt, setSecretPrompt] = useState(career?.secretPrompt || '');
+  const [preScreeningQuestions, setPreScreeningQuestions] = useState<any[]>(
+    career?.preScreeningQuestions || []
   );
   const [employmentType, setEmploymentType] = useState(
     career?.employmentType || 'Full-Time'
@@ -82,6 +152,7 @@ export default function CareerForm({
       },
     ]
   );
+
   const [country, setCountry] = useState(career?.country || 'Philippines');
   const [province, setProvince] = useState(career?.province || '');
   const [city, setCity] = useState(career?.location || '');
@@ -90,10 +161,37 @@ export default function CareerForm({
   const [showSaveModal, setShowSaveModal] = useState('');
   const [isSavingCareer, setIsSavingCareer] = useState(false);
   const savingCareerRef = useRef(false);
-  const [members, setMembers] = useState<any[]>(
-    career?.teamMembers || []
-  );
+  const [members, setMembers] = useState<any[]>(career?.teamMembers || []);
   const [availableMembers, setAvailableMembers] = useState<any[]>([]);
+
+  const steps: Array<{ title: string; subtext: string; state: StepState }> = [
+    {
+      title: 'Career Details & Team Access',
+      subtext: 'Enter the job title, location and requirements.',
+      state: getStepState(0),
+    },
+    {
+      title: 'CV Review & Pre-screening',
+      subtext:
+        'Choose a pipeline to organize your candidates via pre-defined stages.',
+      state: getStepState(1),
+    },
+    {
+      title: 'AI Interview Setup',
+      subtext: 'Assign team members and define their roles for this career.',
+      state: getStepState(2),
+    },
+    {
+      title: 'Pipeline Stages',
+      subtext: 'Assign team members and define their roles for this career.',
+      state: getStepState(3),
+    },
+    {
+      title: 'Review Career',
+      subtext: 'Set up screening, video requirements, and interview questions.',
+      state: getStepState(4),
+    },
+  ];
 
   const currentUserData = {
     id: user?.email,
@@ -103,6 +201,20 @@ export default function CareerForm({
   };
 
   const isFormValid = () => {
+    // Step-specific validation
+    if (currentStep === 0) {
+      // Step 0: Career Details & Team Access
+      return (
+        jobTitle?.trim().length > 0 &&
+        description?.trim().length > 0 &&
+        workSetup?.trim().length > 0
+      );
+    }
+    if (currentStep === 1) {
+      // Step 1: CV Review & Pre-screening (no required fields for now)
+      return true;
+    }
+    // For other steps, use full validation
     return (
       jobTitle?.trim().length > 0 &&
       description?.trim().length > 0 &&
@@ -287,9 +399,7 @@ export default function CareerForm({
   };
 
   const handleUpdateRole = (memberId: string, role: string) => {
-    setMembers(
-      members.map((m) => (m.id === memberId ? { ...m, role } : m))
-    );
+    setMembers(members.map((m) => (m.id === memberId ? { ...m, role } : m)));
   };
 
   useEffect(() => {
@@ -312,7 +422,9 @@ export default function CareerForm({
       if (!orgID) return;
 
       try {
-        const response = await axios.get(`/api/search-members?orgID=${orgID}&limit=100`);
+        const response = await axios.get(
+          `/api/search-members?orgID=${orgID}&limit=100`
+        );
         if (response.status === 200) {
           const membersData = response.data.members.map((m: any) => ({
             id: m._id?.toString() || m.email,
@@ -348,10 +460,284 @@ export default function CareerForm({
     parseProvinces();
   }, [career]);
 
+  const handleStepClick = (stepIndex: number) => {
+    if (stepIndex <= currentStep) {
+      setCurrentStep(stepIndex);
+    }
+  };
+
+  const handleNextStep = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePreviousStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleSaveAndContinue = async () => {
+    // Validate current step before proceeding
+    if (currentStep === 0) {
+      // Validate step 0 fields
+      if (!jobTitle?.trim() || !description?.trim() || !workSetup?.trim()) {
+        errorToast('Please fill in all required fields', 1300);
+        return;
+      }
+    }
+
+    // // Save as unpublished without redirecting
+    // if (formType === 'add') {
+    //   await saveCareerWithoutRedirect('inactive');
+    // } else {
+    //   await updateCareerWithoutRedirect('inactive');
+    // }
+
+    // Move to next step after validation
+    handleNextStep();
+  };
+
+  const saveCareerWithoutRedirect = async (status: string) => {
+    if (
+      Number(minimumSalary) &&
+      Number(maximumSalary) &&
+      Number(minimumSalary) > Number(maximumSalary)
+    ) {
+      errorToast('Minimum salary cannot be greater than maximum salary', 1300);
+      return;
+    }
+
+    if (!savingCareerRef.current) {
+      setIsSavingCareer(true);
+      savingCareerRef.current = true;
+      let userInfoSlice = {
+        image: user.image,
+        name: user.name,
+        email: user.email,
+      };
+      const careerData = {
+        jobTitle,
+        description,
+        workSetup,
+        workSetupRemarks,
+        questions,
+        lastEditedBy: userInfoSlice,
+        createdBy: userInfoSlice,
+        screeningSetting,
+        orgID,
+        requireVideo,
+        salaryNegotiable,
+        minimumSalary: isNaN(Number(minimumSalary))
+          ? null
+          : Number(minimumSalary),
+        maximumSalary: isNaN(Number(maximumSalary))
+          ? null
+          : Number(maximumSalary),
+        country,
+        province,
+        location: city,
+        status,
+        employmentType,
+        secretPrompt,
+        preScreeningQuestions,
+      };
+
+      try {
+        const response = await axios.post('/api/add-career', careerData);
+        if (response.status === 200) {
+          candidateActionToast(
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                marginLeft: 8,
+              }}
+            >
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#181D27' }}>
+                Progress saved
+              </span>
+            </div>,
+            1300,
+            <i
+              className='la la-check-circle'
+              style={{ color: '#039855', fontSize: 32 }}
+            ></i>
+          );
+        }
+      } catch (error) {
+        errorToast('Failed to save progress', 1300);
+      } finally {
+        savingCareerRef.current = false;
+        setIsSavingCareer(false);
+      }
+    }
+  };
+
+  const updateCareerWithoutRedirect = async (status: string) => {
+    if (
+      Number(minimumSalary) &&
+      Number(maximumSalary) &&
+      Number(minimumSalary) > Number(maximumSalary)
+    ) {
+      errorToast('Minimum salary cannot be greater than maximum salary', 1300);
+      return;
+    }
+    let userInfoSlice = {
+      image: user.image,
+      name: user.name,
+      email: user.email,
+    };
+    const updatedCareer = {
+      _id: career._id,
+      jobTitle,
+      description,
+      workSetup,
+      workSetupRemarks,
+      questions,
+      lastEditedBy: userInfoSlice,
+      status,
+      updatedAt: Date.now(),
+      screeningSetting,
+      requireVideo,
+      salaryNegotiable,
+      minimumSalary: isNaN(Number(minimumSalary))
+        ? null
+        : Number(minimumSalary),
+      maximumSalary: isNaN(Number(maximumSalary))
+        ? null
+        : Number(maximumSalary),
+      country,
+      province,
+      location: city,
+      employmentType,
+      secretPrompt,
+      preScreeningQuestions,
+    };
+    try {
+      setIsSavingCareer(true);
+      const response = await axios.post('/api/update-career', updatedCareer);
+      if (response.status === 200) {
+        candidateActionToast(
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginLeft: 8,
+            }}
+          >
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#181D27' }}>
+              Progress saved
+            </span>
+          </div>,
+          1300,
+          <i
+            className='la la-check-circle'
+            style={{ color: '#039855', fontSize: 32 }}
+          ></i>
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      errorToast('Failed to save progress', 1300);
+    } finally {
+      setIsSavingCareer(false);
+    }
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <form onSubmit={form.handleSubmit(() => {})}>
+            <CareerDetailsAndTeamAccess
+              jobTitle={jobTitle}
+              setJobTitle={setJobTitle}
+              employmentType={employmentType}
+              setEmploymentType={setEmploymentType}
+              workSetup={workSetup}
+              setWorkSetup={setWorkSetup}
+              country={country}
+              setCountry={setCountry}
+              province={province}
+              setProvince={setProvince}
+              city={city}
+              setCity={setCity}
+              provinceList={provinceList}
+              setProvinceList={setProvinceList}
+              cityList={cityList}
+              setCityList={setCityList}
+              salaryNegotiable={salaryNegotiable}
+              setSalaryNegotiable={setSalaryNegotiable}
+              minimumSalary={minimumSalary}
+              setMinimumSalary={setMinimumSalary}
+              maximumSalary={maximumSalary}
+              setMaximumSalary={setMaximumSalary}
+              description={description}
+              setDescription={setDescription}
+              screeningSetting={screeningSetting}
+              setScreeningSetting={setScreeningSetting}
+              secretPrompt={secretPrompt}
+              setSecretPrompt={setSecretPrompt}
+              preScreeningQuestions={preScreeningQuestions}
+              onAddCustomQuestion={() => {
+                // TODO: Implement add custom question functionality
+                console.log('Add custom question');
+              }}
+              onAddSuggestedQuestion={(questionId) => {
+                // TODO: Implement add suggested question functionality
+                console.log('Add suggested question', questionId);
+              }}
+              members={members}
+              availableMembers={availableMembers}
+              onAddMember={handleAddMember}
+              onRemoveMember={handleRemoveMember}
+              onUpdateRole={handleUpdateRole}
+              currentUser={currentUserData}
+            />
+          </form>
+        );
+      case 1:
+        return (
+          <>
+            <CVReviewSettingsCard
+              screeningSetting={screeningSetting}
+              setScreeningSetting={setScreeningSetting || (() => {})}
+              secretPrompt={secretPrompt}
+              setSecretPrompt={setSecretPrompt || (() => {})}
+            />
+            <PreScreeningQuestionsCard
+              questions={preScreeningQuestions}
+              onAddCustom={() => {
+                // TODO: Implement add custom question functionality
+                console.log('Add custom question');
+              }}
+              onAddSuggested={(questionId) => {
+                // TODO: Implement add suggested question functionality
+                console.log('Add suggested question', questionId);
+              }}
+            />
+          </>
+        );
+      case 2:
+        return <SegmentPlaceholder title='AI Interview Setup' />;
+      case 3:
+        return <SegmentPlaceholder title='Pipeline Stages' />;
+      case 4:
+        return <SegmentPlaceholder title='Review Career' />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className='col'>
-      <CareerFormHeader
-        formType={formType}
+      <CareerFormStepActions
         isFormValid={isFormValid()}
         isSavingCareer={isSavingCareer}
         onSaveUnpublished={() => {
@@ -361,50 +747,23 @@ export default function CareerForm({
             updateCareer('inactive');
           }
         }}
-        onSavePublished={() => {
-          if (formType === 'add') {
-            confirmSaveCareer('active');
-          } else {
-            updateCareer('active');
-          }
-        }}
-        onCancel={() => {
-          setShowEditModal?.(false);
-        }}
+        onSaveAndContinue={handleSaveAndContinue}
       />
 
-      <CareerDetailsAndTeamAccess
-        jobTitle={jobTitle}
-        setJobTitle={setJobTitle}
-        employmentType={employmentType}
-        setEmploymentType={setEmploymentType}
-        workSetup={workSetup}
-        setWorkSetup={setWorkSetup}
-        country={country}
-        setCountry={setCountry}
-        province={province}
-        setProvince={setProvince}
-        city={city}
-        setCity={setCity}
-        provinceList={provinceList}
-        setProvinceList={setProvinceList}
-        cityList={cityList}
-        setCityList={setCityList}
-        salaryNegotiable={salaryNegotiable}
-        setSalaryNegotiable={setSalaryNegotiable}
-        minimumSalary={minimumSalary}
-        setMinimumSalary={setMinimumSalary}
-        maximumSalary={maximumSalary}
-        setMaximumSalary={setMaximumSalary}
-        description={description}
-        setDescription={setDescription}
-        members={members}
-        availableMembers={availableMembers}
-        onAddMember={handleAddMember}
-        onRemoveMember={handleRemoveMember}
-        onUpdateRole={handleUpdateRole}
-        currentUser={currentUserData}
-      />
+      <SegmentedFormLayout
+        currentStep={currentStep}
+        steps={steps}
+        onStepClick={handleStepClick}
+      >
+        <div className='form-step-content'>
+          <div className='form-step-main'>{renderStepContent()}</div>
+          {(currentStep === 0 || currentStep === 1) && (
+            <div className='form-step-sidebar'>
+              <Tip />
+            </div>
+          )}
+        </div>
+      </SegmentedFormLayout>
 
       {showSaveModal && (
         <CareerActionModal

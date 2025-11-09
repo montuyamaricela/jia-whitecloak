@@ -105,15 +105,24 @@ export default function CustomDropdown(props) {
               />
             </svg>
           )}
-          {settingList.find((setting) => setting.name === screeningSetting)
-            ?.icon && (
-            <i
-              className={
-                settingList.find((setting) => setting.name === screeningSetting)
-                  ?.icon
+          {(() => {
+            const selectedSetting = settingList.find(
+              (setting) => setting.name === screeningSetting
+            )
+            if (selectedSetting?.icon) {
+              // Check if icon is a React element
+              if (
+                typeof selectedSetting.icon === 'object' &&
+                selectedSetting.icon !== null &&
+                '$$typeof' in selectedSetting.icon
+              ) {
+                return selectedSetting.icon
               }
-            ></i>
-          )}
+              // Otherwise treat as className string
+              return <i className={selectedSetting.icon}></i>
+            }
+            return null
+          })()}
           <span
             style={{
               overflow: 'hidden',
@@ -352,17 +361,38 @@ export default function CustomDropdown(props) {
                           gap: '8px',
                         }}
                       >
-                        <span
+                        <div
                           style={{
-                            fontFamily: "'Satoshi', sans-serif",
-                            fontSize: '14px',
-                            fontWeight: isSelected ? 700 : 500,
-                            lineHeight: '1.4285714285714286em',
-                            color: isSelected ? '#181D27' : '#414651',
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: '8px',
+                            flex: 1,
                           }}
                         >
-                          {setting.name?.replace('_', ' ')}
-                        </span>
+                          {setting.icon && (
+                            <div style={{ flexShrink: 0 }}>
+                              {typeof setting.icon === 'object' &&
+                              setting.icon !== null &&
+                              '$$typeof' in setting.icon ? (
+                                setting.icon
+                              ) : (
+                                <i className={setting.icon}></i>
+                              )}
+                            </div>
+                          )}
+                          <span
+                            style={{
+                              fontFamily: "'Satoshi', sans-serif",
+                              fontSize: '14px',
+                              fontWeight: isSelected ? 700 : 500,
+                              lineHeight: '1.4285714285714286em',
+                              color: isSelected ? '#181D27' : '#414651',
+                            }}
+                          >
+                            {setting.name?.replace('_', ' ')}
+                          </span>
+                        </div>
                         {isSelected && (
                           <svg
                             width='20'
