@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import CustomDropdown from '@/lib/components/CareerComponents/CustomDropdown';
-import SecretPromptQuestion from './SecretPromptQuestion';
+import '@/lib/styles/career-details-styles.scss';
+import SecretPromptQuestion from '../CVReview/SecretPromptQuestion';
+import Image from 'next/image';
 
-const cvScreeningOptions = [
+const interviewScreeningOptions = [
   {
     name: 'Good Fit and above',
     icon: (
@@ -74,30 +76,33 @@ const cvScreeningOptions = [
   },
 ];
 
-export default function CVReviewSettingsCard({
-  screeningSetting,
-  setScreeningSetting,
+export default function AIInterviewSettingsCard({
+  interviewScreeningSetting,
+  setInterviewScreeningSetting,
+  requireVideo,
+  setRequireVideo,
   secretPrompt,
   setSecretPrompt,
 }: {
-  screeningSetting: string;
-  setScreeningSetting: (value: string) => void;
+  interviewScreeningSetting: string;
+  setInterviewScreeningSetting: (value: string) => void;
+  requireVideo: boolean;
+  setRequireVideo: (value: boolean) => void;
   secretPrompt: string;
   setSecretPrompt: (value: string) => void;
 }) {
-
   return (
     <div className='career-card'>
       <div className='card-heading'>
         <div className='heading-wrapper'>
-          <span className='heading-text'>CV Review Settings</span>
+          <span className='heading-text'>AI Interview Settings</span>
         </div>
       </div>
       <div className='card-content'>
         <div className='cv-review-settings-section'>
           <div className='cv-screening-section'>
             <div>
-              <div className='section-heading'>CV Screening</div>
+              <div className='section-heading'>AI Interview Screening</div>
               <div className='section-description'>
                 Jia automatically endorses candidates who meet the chosen
                 criteria.
@@ -105,11 +110,47 @@ export default function CVReviewSettingsCard({
             </div>
             <div className='cv-screening-dropdown'>
               <CustomDropdown
-                onSelectSetting={setScreeningSetting}
-                screeningSetting={screeningSetting}
-                settingList={cvScreeningOptions}
+                onSelectSetting={setInterviewScreeningSetting}
+                screeningSetting={interviewScreeningSetting}
+                settingList={interviewScreeningOptions}
                 placeholder='Choose screening setting'
               />
+            </div>
+          </div>
+
+          <div className='divider'></div>
+
+          <div className='require-video-section'>
+            <div className='require-video-text-section'>
+              <div className='section-heading'>Require Video on Interview</div>
+              <div className='section-description'>
+                Require candidates to keep their camera on. Recordings will
+                appear on their analysis page.
+              </div>
+            </div>
+            <div className='require-video-status-container'>
+              <div className='require-video-status-item'>
+                <Image
+                  src='/icons/career/videocam.svg'
+                  alt='Video'
+                  width={24}
+                  height={24}
+                />
+                <span className='require-video-label'>
+                  Require Video Interview
+                </span>
+              </div>
+              <div className='toggle-wrapper'>
+                <div
+                  className={`toggle-switch ${requireVideo ? 'active' : ''}`}
+                  onClick={() => setRequireVideo(!requireVideo)}
+                >
+                  <div className='toggle-slider'></div>
+                </div>
+                <span className='toggle-label'>
+                  {requireVideo ? 'Yes' : 'No'}
+                </span>
+              </div>
             </div>
           </div>
 

@@ -19,7 +19,9 @@ import SegmentPlaceholder from './SegmentPlaceholder';
 import Tip from './CareerDetailsAndTeamAccess/Tip';
 import CVReviewSettingsCard from './CVReview/CVReviewSettingsCard';
 import PreScreeningQuestionsCard from './CVReview/PreScreeningQuestionsCard';
-import { hasStepData } from './careerFormSchema';
+import AIInterviewSettingsCard from './InterviewSetup/AIInterviewSettingsCard';
+import AIInterviewQuestionsCard from './InterviewSetup/AIInterviewQuestionsCard';
+import { hasStepData } from './schema/careerFormSchema';
 
 export default function CareerForm({
   career,
@@ -102,6 +104,15 @@ export default function CareerForm({
   const [secretPrompt, setSecretPrompt] = useState(career?.secretPrompt || '');
   const [preScreeningQuestions, setPreScreeningQuestions] = useState<any[]>(
     career?.preScreeningQuestions || []
+  );
+  const [interviewScreeningSetting, setInterviewScreeningSetting] = useState(
+    career?.interviewScreeningSetting || 'Good Fit and above'
+  );
+  const [interviewSecretPrompt, setInterviewSecretPrompt] = useState(
+    career?.interviewSecretPrompt || ''
+  );
+  const [interviewQuestions, setInterviewQuestions] = useState<any[]>(
+    career?.interviewQuestions || []
   );
   const [employmentType, setEmploymentType] = useState(
     career?.employmentType || 'Full-Time'
@@ -725,7 +736,24 @@ export default function CareerForm({
           </>
         );
       case 2:
-        return <SegmentPlaceholder title='AI Interview Setup' />;
+        return (
+          <>
+            <AIInterviewSettingsCard
+              interviewScreeningSetting={interviewScreeningSetting}
+              setInterviewScreeningSetting={setInterviewScreeningSetting}
+              requireVideo={requireVideo}
+              setRequireVideo={setRequireVideo}
+              secretPrompt={interviewSecretPrompt}
+              setSecretPrompt={setInterviewSecretPrompt}
+            />
+            <AIInterviewQuestionsCard
+              questions={questions}
+              setQuestions={setQuestions}
+              jobTitle={jobTitle}
+              description={description}
+            />
+          </>
+        );
       case 3:
         return <SegmentPlaceholder title='Pipeline Stages' />;
       case 4:
@@ -738,6 +766,8 @@ export default function CareerForm({
   return (
     <div className='col'>
       <CareerFormStepActions
+        currentStep={currentStep}
+        jobTitle={jobTitle}
         isFormValid={isFormValid()}
         isSavingCareer={isSavingCareer}
         onSaveUnpublished={() => {
@@ -757,7 +787,7 @@ export default function CareerForm({
       >
         <div className='form-step-content'>
           <div className='form-step-main'>{renderStepContent()}</div>
-          {(currentStep === 0 || currentStep === 1) && (
+          {(currentStep === 0 || currentStep === 1 || currentStep === 2) && (
             <div className='form-step-sidebar'>
               <Tip />
             </div>

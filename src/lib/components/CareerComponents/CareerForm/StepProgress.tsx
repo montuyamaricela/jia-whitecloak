@@ -51,10 +51,8 @@ export default function StepProgress({
                 y2='20'
                 gradientUnits='userSpaceOnUse'
               >
-                <stop stopColor='#9FCAED' />
-                <stop offset='0.34' stopColor='#CEB6DA' />
-                <stop offset='0.67' stopColor='#EBACC9' />
-                <stop offset='1' stopColor='#FCCEC0' />
+                <stop stopColor='#000000' />
+                <stop offset='1' stopColor='#000000' />
               </linearGradient>
             </defs>
           </svg>

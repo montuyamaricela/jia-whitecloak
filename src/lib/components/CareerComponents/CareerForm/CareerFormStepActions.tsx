@@ -1,28 +1,55 @@
 'use client';
 
 export default function CareerFormStepActions({
+  currentStep,
+  jobTitle,
   isFormValid,
   isSavingCareer,
   onSaveUnpublished,
   onSaveAndContinue,
 }: {
+  currentStep: number;
+  jobTitle: string;
   isFormValid: boolean;
   isSavingCareer: boolean;
   onSaveUnpublished: () => void;
   onSaveAndContinue: () => void;
 }) {
+  const getTitle = () => {
+    if (currentStep === 0) {
+      return 'Add new Career';
+    }
+    return (
+      <>
+        <span style={{ color: '#717680' }}>[Draft]</span>{' '}
+        {jobTitle || 'Untitled Career'}
+      </>
+    );
+  };
+
   return (
     <div
       style={{
         marginBottom: '35px',
         display: 'flex',
         flexDirection: 'row',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
         alignItems: 'center',
         gap: '10px',
         width: '100%',
       }}
     >
+      <h1 style={{ fontSize: '24px', fontWeight: 550, color: '#111827' }}>
+        {getTitle()}
+      </h1>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: '10px',
+        }}
+      >
       <button
         disabled={!isFormValid || isSavingCareer}
         style={{
@@ -99,6 +126,7 @@ export default function CareerFormStepActions({
           />
         </svg>
       </button>
+      </div>
     </div>
   );
 }
