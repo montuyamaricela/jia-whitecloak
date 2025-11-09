@@ -109,6 +109,7 @@
     position: relative;
     overflow: visible;
     z-index: inherit;
+    background-color: white;
 
     &:has(.form-field:focus-within) {
       z-index: 100;

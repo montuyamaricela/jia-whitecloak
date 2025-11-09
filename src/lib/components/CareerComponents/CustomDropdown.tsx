@@ -11,6 +11,7 @@ export default function CustomDropdown(props) {
     showSupportingText = false,
     showSearch = false,
     showAvatar = false,
+    hasError = false,
   } = props;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,7 +61,7 @@ export default function CustomDropdown(props) {
           width: '100%',
           padding: '10px 14px',
           background: '#FFFFFF',
-          border: '1px solid #E9EAEB',
+          border: hasError ? '1px solid #DC6803' : '1px solid #E9EAEB',
           borderRadius: '8px',
           boxShadow: '0px 1px 2px 0px rgba(10, 13, 18, 0.05)',
           display: 'flex',

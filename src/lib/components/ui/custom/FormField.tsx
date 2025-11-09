@@ -81,17 +81,17 @@ export default function FormField({
 
       {error && (
         <div
-          className='form-field-error'
           style={{
-            fontSize: 12,
-            color: '#DC6803',
+            fontSize: 14,
+            color: '#F04438',
             marginTop: 6,
             display: 'flex',
+            fontWeight: 500,
             alignItems: 'center',
             gap: 4,
+            backgroundColor: 'white',
           }}
         >
-          <i className='la la-exclamation-circle' style={{ fontSize: 14 }}></i>
           <span>{error}</span>
         </div>
       )}

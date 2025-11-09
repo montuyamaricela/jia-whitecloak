@@ -18,11 +18,13 @@ export default function AIInterviewQuestionsCard({
   setQuestions,
   jobTitle,
   description,
+  hasError = false,
 }: {
   questions?: any[];
   setQuestions: (questions: any[]) => void;
   jobTitle: string;
   description: string;
+  hasError?: boolean;
 }) {
   const {
     isGeneratingQuestions,
@@ -57,12 +59,16 @@ export default function AIInterviewQuestionsCard({
 
   return (
     <>
-      <div className='career-card'>
+      <div
+        className='career-card'
+      >
         <div className='card-heading'>
           <div className='heading-wrapper'>
             <div className='heading-with-badge'>
               <span className='heading-text'>AI Interview Questions</span>
-              <div className='question-count-badge'>
+              <div
+                className='question-count-badge'
+              >
                 <span>{totalQuestionCount}</span>
               </div>
             </div>
@@ -91,6 +97,42 @@ export default function AIInterviewQuestionsCard({
           </div>
         </div>
         <div className='card-content'>
+          {hasError && totalQuestionCount < 5 && (
+            <div
+              style={{
+                fontSize: 14,
+                color: '#F04438',
+                display: 'flex',
+                alignItems: 'center',
+                fontWeight: 500,
+                gap: 6,
+              }}
+            >
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 16 16'
+                fill='none'
+                xmlns='http://www.w3.org/2000/svg'
+              >
+                <path
+                  d='M8 1.33334L1.33334 13.3333H14.6667L8 1.33334Z'
+                  stroke='#F04438'
+                  strokeWidth='1.33'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
+                <path
+                  d='M8 5.33334V8.66667M8 11.3333H8.00667'
+                  stroke='#F04438'
+                  strokeWidth='1.33'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
+              </svg>
+              <span>Please add at least 5 interview questions.</span>
+            </div>
+          )}
           <div className='interview-questions-section'>
             <div className='main-container'>
               {questions.map((group, index) => {
@@ -386,7 +428,6 @@ export default function AIInterviewQuestionsCard({
                               }
                               max={group.questions.length}
                               min={0}
-                        
                               onChange={(e) => {
                                 let value = parseInt(e.target.value);
 

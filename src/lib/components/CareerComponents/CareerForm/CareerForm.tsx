@@ -36,7 +36,14 @@ export default function CareerForm({
   const [currentStep, setCurrentStep] = useState(0);
   const [stepErrors, setStepErrors] = useState<Record<number, boolean>>({});
 
-  const form = useForm({
+  const {
+    register,
+    formState: { errors },
+    trigger,
+    setValue,
+    watch,
+  } = useForm({
+    mode: 'onBlur',
     defaultValues: {
       jobTitle: career?.jobTitle || '',
       description: career?.description || '',
@@ -53,6 +60,21 @@ export default function CareerForm({
       preScreeningQuestions: career?.preScreeningQuestions || [],
     },
   });
+
+  useEffect(() => {
+    register('jobTitle', {
+      required: 'This is a required field.',
+      validate: (value) => value.trim().length > 0 || 'This is a required field.'
+    });
+    register('description', {
+      required: 'This is a required field.',
+      validate: (value) => value.trim().length > 0 || 'This is a required field.'
+    });
+    register('employmentType', { required: 'This is a required field.' });
+    register('workSetup', { required: 'This is a required field.' });
+    register('province', { required: 'This is a required field.' });
+    register('city', { required: 'This is a required field.' });
+  }, [register]);
 
   type StepState =
     | 'active-pending'
@@ -74,11 +96,10 @@ export default function CareerForm({
   });
 
   const getStepState = (stepIndex: number): StepState => {
-    if (stepErrors[stepIndex]) {
-      return 'error';
-    }
-
     if (stepIndex === currentStep) {
+      if (stepErrors[stepIndex]) {
+        return 'error';
+      }
       const formData = getFormData();
       return hasStepData(stepIndex, formData)
         ? 'active-in-progress'
@@ -167,6 +188,36 @@ export default function CareerForm({
   const [country, setCountry] = useState(career?.country || 'Philippines');
   const [province, setProvince] = useState(career?.province || '');
   const [city, setCity] = useState(career?.location || '');
+
+  const updateJobTitle = (value: string) => {
+    setJobTitle(value);
+    setValue('jobTitle', value, { shouldValidate: true });
+  };
+
+  const updateDescription = (value: string) => {
+    setDescription(value);
+    setValue('description', value, { shouldValidate: true });
+  };
+
+  const updateEmploymentType = (value: string) => {
+    setEmploymentType(value);
+    setValue('employmentType', value, { shouldValidate: true });
+  };
+
+  const updateWorkSetup = (value: string) => {
+    setWorkSetup(value);
+    setValue('workSetup', value, { shouldValidate: true });
+  };
+
+  const updateProvince = (value: string) => {
+    setProvince(value);
+    setValue('province', value, { shouldValidate: true });
+  };
+
+  const updateCity = (value: string) => {
+    setCity(value);
+    setValue('city', value, { shouldValidate: true });
+  };
   const [provinceList, setProvinceList] = useState([]);
   const [cityList, setCityList] = useState([]);
   const [showSaveModal, setShowSaveModal] = useState('');
@@ -459,6 +510,7 @@ export default function CareerForm({
       const defaultProvince = philippineCitiesAndProvinces.provinces[0];
       if (!career?.province) {
         setProvince(defaultProvince.name);
+        setValue('province', defaultProvince.name);
       }
       const cities = philippineCitiesAndProvinces.cities.filter(
         (city) => city.province === defaultProvince.key
@@ -466,10 +518,16 @@ export default function CareerForm({
       setCityList(cities);
       if (!career?.location) {
         setCity(cities[0].name);
+        setValue('city', cities[0].name);
       }
     };
     parseProvinces();
-  }, [career]);
+  }, [career, setValue]);
+
+  useEffect(() => {
+    setValue('employmentType', employmentType);
+    setValue('country', country);
+  }, [employmentType, country, setValue]);
 
   const handleStepClick = (stepIndex: number) => {
     if (stepIndex <= currentStep) {
@@ -490,23 +548,42 @@ export default function CareerForm({
   };
 
   const handleSaveAndContinue = async () => {
-    // Validate current step before proceeding
     if (currentStep === 0) {
-      // Validate step 0 fields
-      if (!jobTitle?.trim() || !description?.trim() || !workSetup?.trim()) {
+      const fieldsToValidate = [
+        'jobTitle',
+        'description',
+        'employmentType',
+        'workSetup',
+        'province',
+        'city',
+      ];
+
+      const isValid = await trigger(fieldsToValidate as any);
+
+      if (!isValid) {
         errorToast('Please fill in all required fields', 1300);
+        setStepErrors({ ...stepErrors, 0: true });
         return;
       }
+
+      setStepErrors({ ...stepErrors, 0: false });
     }
 
-    // // Save as unpublished without redirecting
-    // if (formType === 'add') {
-    //   await saveCareerWithoutRedirect('inactive');
-    // } else {
-    //   await updateCareerWithoutRedirect('inactive');
-    // }
+    if (currentStep === 2) {
+      const totalQuestionCount = questions.reduce(
+        (total, category) => total + (category?.questions?.length || 0),
+        0
+      );
 
-    // Move to next step after validation
+      if (totalQuestionCount < 5) {
+        errorToast('Please add at least 5 interview questions', 1300);
+        setStepErrors({ ...stepErrors, 2: true });
+        return;
+      }
+
+      setStepErrors({ ...stepErrors, 2: false });
+    }
+
     handleNextStep();
   };
 
@@ -665,53 +742,50 @@ export default function CareerForm({
     switch (currentStep) {
       case 0:
         return (
-          <form onSubmit={form.handleSubmit(() => {})}>
-            <CareerDetailsAndTeamAccess
-              jobTitle={jobTitle}
-              setJobTitle={setJobTitle}
-              employmentType={employmentType}
-              setEmploymentType={setEmploymentType}
-              workSetup={workSetup}
-              setWorkSetup={setWorkSetup}
-              country={country}
-              setCountry={setCountry}
-              province={province}
-              setProvince={setProvince}
-              city={city}
-              setCity={setCity}
-              provinceList={provinceList}
-              setProvinceList={setProvinceList}
-              cityList={cityList}
-              setCityList={setCityList}
-              salaryNegotiable={salaryNegotiable}
-              setSalaryNegotiable={setSalaryNegotiable}
-              minimumSalary={minimumSalary}
-              setMinimumSalary={setMinimumSalary}
-              maximumSalary={maximumSalary}
-              setMaximumSalary={setMaximumSalary}
-              description={description}
-              setDescription={setDescription}
-              screeningSetting={screeningSetting}
-              setScreeningSetting={setScreeningSetting}
-              secretPrompt={secretPrompt}
-              setSecretPrompt={setSecretPrompt}
-              preScreeningQuestions={preScreeningQuestions}
-              onAddCustomQuestion={() => {
-                // TODO: Implement add custom question functionality
-                console.log('Add custom question');
-              }}
-              onAddSuggestedQuestion={(questionId) => {
-                // TODO: Implement add suggested question functionality
-                console.log('Add suggested question', questionId);
-              }}
-              members={members}
-              availableMembers={availableMembers}
-              onAddMember={handleAddMember}
-              onRemoveMember={handleRemoveMember}
-              onUpdateRole={handleUpdateRole}
-              currentUser={currentUserData}
-            />
-          </form>
+          <CareerDetailsAndTeamAccess
+            jobTitle={jobTitle}
+            setJobTitle={updateJobTitle}
+            employmentType={employmentType}
+            setEmploymentType={updateEmploymentType}
+            workSetup={workSetup}
+            setWorkSetup={updateWorkSetup}
+            country={country}
+            setCountry={setCountry}
+            province={province}
+            setProvince={updateProvince}
+            city={city}
+            setCity={updateCity}
+            provinceList={provinceList}
+            setProvinceList={setProvinceList}
+            cityList={cityList}
+            setCityList={setCityList}
+            salaryNegotiable={salaryNegotiable}
+            setSalaryNegotiable={setSalaryNegotiable}
+            minimumSalary={minimumSalary}
+            setMinimumSalary={setMinimumSalary}
+            maximumSalary={maximumSalary}
+            setMaximumSalary={setMaximumSalary}
+            description={description}
+            setDescription={updateDescription}
+            screeningSetting={screeningSetting}
+            setScreeningSetting={setScreeningSetting}
+            secretPrompt={secretPrompt}
+            setSecretPrompt={setSecretPrompt}
+            preScreeningQuestions={preScreeningQuestions}
+            onAddCustomQuestion={() => {
+              console.log('Add custom question');
+            }}
+            onAddSuggestedQuestion={(questionId) => {
+              console.log('Add suggested question', questionId);
+            }}
+            members={members}
+            availableMembers={availableMembers}
+            onAddMember={handleAddMember}
+            onRemoveMember={handleRemoveMember}
+            onUpdateRole={handleUpdateRole}
+            currentUser={currentUserData}
+            errors={errors}
+          />
         );
       case 1:
         return (
@@ -751,6 +825,7 @@ export default function CareerForm({
               setQuestions={setQuestions}
               jobTitle={jobTitle}
               description={description}
+              hasError={stepErrors[2]}
             />
           </>
         );

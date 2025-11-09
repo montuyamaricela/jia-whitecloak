@@ -51,7 +51,7 @@ export default function CareerFormStepActions({
         }}
       >
       <button
-        disabled={!isFormValid || isSavingCareer}
+        disabled={isSavingCareer}
         style={{
           width: 'fit-content',
           color: '#414651',
@@ -59,7 +59,7 @@ export default function CareerFormStepActions({
           border: '1px solid #D5D7DA',
           padding: '8px 16px',
           borderRadius: '60px',
-          cursor: !isFormValid || isSavingCareer ? 'not-allowed' : 'pointer',
+          cursor: isSavingCareer ? 'not-allowed' : 'pointer',
           whiteSpace: 'nowrap',
           fontFamily: "'Satoshi', sans-serif",
           fontSize: '14px',
@@ -69,7 +69,7 @@ export default function CareerFormStepActions({
         }}
         onClick={onSaveUnpublished}
         onMouseEnter={(e) => {
-          if (!isFormValid || isSavingCareer) return;
+          if (isSavingCareer) return;
           e.currentTarget.style.background = '#f5f5f5';
         }}
         onMouseLeave={(e) => {
@@ -79,15 +79,15 @@ export default function CareerFormStepActions({
         Save as Unpublished
       </button>
       <button
-        disabled={!isFormValid || isSavingCareer}
+        disabled={isSavingCareer}
         style={{
           width: 'fit-content',
-          background: !isFormValid || isSavingCareer ? '#D5D7DA' : '#181D27',
+          background: isSavingCareer ? '#D5D7DA' : '#181D27',
           color: '#fff',
           border: '1px solid #E9EAEB',
           padding: '8px 16px',
           borderRadius: '60px',
-          cursor: !isFormValid || isSavingCareer ? 'not-allowed' : 'pointer',
+          cursor: isSavingCareer ? 'not-allowed' : 'pointer',
           whiteSpace: 'nowrap',
           fontFamily: "'Satoshi', sans-serif",
           fontSize: '14px',
@@ -101,7 +101,7 @@ export default function CareerFormStepActions({
         }}
         onClick={onSaveAndContinue}
         onMouseEnter={(e) => {
-          if (!isFormValid || isSavingCareer) return;
+          if (isSavingCareer) return;
           e.currentTarget.style.opacity = '0.8';
         }}
         onMouseLeave={(e) => {

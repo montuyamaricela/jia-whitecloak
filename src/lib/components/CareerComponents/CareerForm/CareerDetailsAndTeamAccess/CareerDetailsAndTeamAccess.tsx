@@ -50,6 +50,7 @@ export default function CareerDetailsAndTeamAccess({
   preScreeningQuestions = [],
   onAddCustomQuestion,
   onAddSuggestedQuestion,
+  errors,
 }: {
   // Career Information
   jobTitle: string;
@@ -98,6 +99,7 @@ export default function CareerDetailsAndTeamAccess({
   preScreeningQuestions?: any[];
   onAddCustomQuestion?: () => void;
   onAddSuggestedQuestion?: (questionId: number) => void;
+  errors?: any;
 }) {
   return (
     <div className='career-details-container'>
@@ -125,10 +127,12 @@ export default function CareerDetailsAndTeamAccess({
           setMinimumSalary={setMinimumSalary}
           maximumSalary={maximumSalary}
           setMaximumSalary={setMaximumSalary}
+          errors={errors}
         />
         <JobDescriptionCard
           description={description}
           setDescription={setDescription}
+          errors={errors}
         />
         <TeamAccessCard
           members={members}

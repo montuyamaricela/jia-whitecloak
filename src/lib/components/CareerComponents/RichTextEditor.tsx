@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect } from 'react';
 
-export default function RichTextEditor({ setText, text }) {
+export default function RichTextEditor({ setText, text, hasError = false }) {
   const descriptionEditorRef = useRef(null);
 
   const formatText = (command, value = null) => {
@@ -70,11 +70,14 @@ export default function RichTextEditor({ setText, text }) {
       <div
         ref={descriptionEditorRef}
         contentEditable={true}
-        className='rich-text-editor-content'
+        className={`rich-text-editor-content ${hasError ? 'error' : ''}`}
         onInput={handleDescriptionChange}
         onBlur={handleDescriptionChange}
         onPaste={handlePaste}
         data-placeholder='Enter job description...'
+        style={{
+          borderColor: hasError ? '#DC6803' : undefined,
+        }}
       ></div>
       {/* Rich Text Editor Toolbar */}
       <div className='rich-text-editor-toolbar'>

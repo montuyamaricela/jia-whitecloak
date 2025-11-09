@@ -41,6 +41,7 @@ export default function CareerInformationCard({
   setMinimumSalary,
   maximumSalary,
   setMaximumSalary,
+  errors,
 }: {
   jobTitle: string;
   setJobTitle: (value: string) => void;
@@ -64,6 +65,7 @@ export default function CareerInformationCard({
   setMinimumSalary: (value: string) => void;
   maximumSalary: string;
   setMaximumSalary: (value: string) => void;
+  errors?: any;
 }) {
   const [currency, setCurrency] = useState('PHP');
   const handleProvinceChange = (selectedProvince: string) => {
@@ -90,7 +92,11 @@ export default function CareerInformationCard({
       <div className='card-content'>
         <div className='form-section'>
           <div className='section-heading'>Basic Information</div>
-          <FormField name='jobTitle' label='Job Title'>
+          <FormField
+            name='jobTitle'
+            label='Job Title'
+            error={errors?.jobTitle?.message}
+          >
             <input
               className='input-field'
               type='text'
@@ -101,7 +107,9 @@ export default function CareerInformationCard({
                 width: '100%',
                 padding: '10px 14px',
                 background: '#ffffff',
-                border: '1px solid #e9eaeb',
+                border: errors?.jobTitle
+                  ? '1px solid #DC6803'
+                  : '1px solid #e9eaeb',
                 borderRadius: '8px',
                 boxShadow: '0px 1px 2px 0px rgba(10, 13, 18, 0.05)',
                 fontFamily: "'Satoshi', sans-serif",
@@ -111,10 +119,14 @@ export default function CareerInformationCard({
                 color: '#181d27',
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = '#e9eaeb';
+                e.target.style.borderColor = errors?.jobTitle
+                  ? '#DC6803'
+                  : '#e9eaeb';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = '#e9eaeb';
+                e.target.style.borderColor = errors?.jobTitle
+                  ? '#DC6803'
+                  : '#e9eaeb';
               }}
             />
           </FormField>
@@ -123,20 +135,30 @@ export default function CareerInformationCard({
         <div className='form-section'>
           <div className='section-heading'>Work Setting</div>
           <div className='form-row'>
-            <FormField name='employmentType' label='Employment Type'>
+            <FormField
+              name='employmentType'
+              label='Employment Type'
+              error={errors?.employmentType?.message}
+            >
               <CustomDropdown
                 onSelectSetting={setEmploymentType}
                 screeningSetting={employmentType}
                 settingList={employmentTypeOptions}
                 placeholder='Choose employment type'
+                hasError={!!errors?.employmentType}
               />
             </FormField>
-            <FormField name='workSetup' label='Arrangement'>
+            <FormField
+              name='workSetup'
+              label='Arrangement'
+              error={errors?.workSetup?.message}
+            >
               <CustomDropdown
                 onSelectSetting={setWorkSetup}
                 screeningSetting={workSetup}
                 settingList={workSetupOptions}
                 placeholder='Choose work arrangement'
+                hasError={!!errors?.workSetup}
               />
             </FormField>
           </div>
@@ -145,7 +167,7 @@ export default function CareerInformationCard({
         <div className='form-section'>
           <div className='section-heading'>Location</div>
           <div className='form-row'>
-            <FormField name='country' label='Country'>
+            <FormField name='country' label='Country' error={errors?.country?.message}>
               <CustomDropdown
                 onSelectSetting={setCountry}
                 screeningSetting={country}
@@ -153,20 +175,26 @@ export default function CareerInformationCard({
                 placeholder='Select Country'
               />
             </FormField>
-            <FormField name='province' label='State / Province'>
+            <FormField
+              name='province'
+              label='State / Province'
+              error={errors?.province?.message}
+            >
               <CustomDropdown
                 onSelectSetting={handleProvinceChange}
                 screeningSetting={province}
                 settingList={provinceList}
                 placeholder='Choose state / province'
+                hasError={!!errors?.province}
               />
             </FormField>
-            <FormField name='city' label='City'>
+            <FormField name='city' label='City' error={errors?.city?.message}>
               <CustomDropdown
                 onSelectSetting={setCity}
                 screeningSetting={city}
                 settingList={cityList}
                 placeholder='Choose city'
+                hasError={!!errors?.city}
               />
             </FormField>
           </div>
