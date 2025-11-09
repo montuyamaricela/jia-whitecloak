@@ -167,7 +167,11 @@ export default function CareerInformationCard({
         <div className='form-section'>
           <div className='section-heading'>Location</div>
           <div className='form-row'>
-            <FormField name='country' label='Country' error={errors?.country?.message}>
+            <FormField
+              name='country'
+              label='Country'
+              error={errors?.country?.message}
+            >
               <CustomDropdown
                 onSelectSetting={setCountry}
                 screeningSetting={country}
@@ -214,8 +218,15 @@ export default function CareerInformationCard({
             </div>
           </div>
           <div className='salary-inputs'>
-            <FormField name='minimumSalary' label='Minimum Salary'>
-              <div className='salary-input-container'>
+            <FormField
+              name='minimumSalary'
+              label='Minimum Salary'
+              error={errors?.minimumSalary?.message}
+            >
+              <div
+                className='salary-input-container'
+                style={errors?.minimumSalary ? { borderColor: '#F04438' } : {}}
+              >
                 <div className='salary-input-content'>
                   <span className='currency-prefix'>
                     {currencyOptions.find((c) => c.name === currency)?.symbol ||
@@ -225,11 +236,36 @@ export default function CareerInformationCard({
                     type='number'
                     value={minimumSalary}
                     onChange={(e) => setMinimumSalary(e.target.value)}
+                    onBlur={(e) => setMinimumSalary(e.target.value)}
                     placeholder='0'
                     min={0}
                     className='salary-input-field'
                   />
                 </div>
+                {errors?.minimumSalary && (
+                  <svg
+                    width='16'
+                    height='16'
+                    viewBox='0 0 16 16'
+                    fill='none'
+                    xmlns='http://www.w3.org/2000/svg'
+                  >
+                    <g clip-path='url(#clip0_3131_3287)'>
+                      <path
+                        d='M8.00016 5.33331V7.99998M8.00016 10.6666H8.00683M14.6668 7.99998C14.6668 11.6819 11.6821 14.6666 8.00016 14.6666C4.31826 14.6666 1.3335 11.6819 1.3335 7.99998C1.3335 4.31808 4.31826 1.33331 8.00016 1.33331C11.6821 1.33331 14.6668 4.31808 14.6668 7.99998Z'
+                        stroke='#F04438'
+                        stroke-width='1.33333'
+                        stroke-linecap='round'
+                        stroke-linejoin='round'
+                      />
+                    </g>
+                    <defs>
+                      <clipPath id='clip0_3131_3287'>
+                        <rect width='16' height='16' fill='white' />
+                      </clipPath>
+                    </defs>
+                  </svg>
+                )}
                 <div className='currency-dropdown-wrapper'>
                   <CustomDropdown
                     onSelectSetting={setCurrency}
@@ -240,8 +276,15 @@ export default function CareerInformationCard({
                 </div>
               </div>
             </FormField>
-            <FormField name='maximumSalary' label='Maximum Salary'>
-              <div className='salary-input-container'>
+            <FormField
+              name='maximumSalary'
+              label='Maximum Salary'
+              error={errors?.maximumSalary?.message}
+            >
+              <div
+                className='salary-input-container'
+                style={errors?.maximumSalary ? { borderColor: '#F04438' } : {}}
+              >
                 <div className='salary-input-content'>
                   <span className='currency-prefix'>
                     {currencyOptions.find((c) => c.name === currency)?.symbol ||
@@ -251,11 +294,36 @@ export default function CareerInformationCard({
                     type='number'
                     value={maximumSalary}
                     onChange={(e) => setMaximumSalary(e.target.value)}
+                    onBlur={(e) => setMaximumSalary(e.target.value)}
                     placeholder='0'
                     min={0}
                     className='salary-input-field'
                   />
                 </div>
+                {errors?.maximumSalary && (
+                  <svg
+                    width='16'
+                    height='16'
+                    viewBox='0 0 16 16'
+                    fill='none'
+                    xmlns='http://www.w3.org/2000/svg'
+                  >
+                    <g clip-path='url(#clip0_3131_3287)'>
+                      <path
+                        d='M8.00016 5.33331V7.99998M8.00016 10.6666H8.00683M14.6668 7.99998C14.6668 11.6819 11.6821 14.6666 8.00016 14.6666C4.31826 14.6666 1.3335 11.6819 1.3335 7.99998C1.3335 4.31808 4.31826 1.33331 8.00016 1.33331C11.6821 1.33331 14.6668 4.31808 14.6668 7.99998Z'
+                        stroke='#F04438'
+                        stroke-width='1.33333'
+                        stroke-linecap='round'
+                        stroke-linejoin='round'
+                      />
+                    </g>
+                    <defs>
+                      <clipPath id='clip0_3131_3287'>
+                        <rect width='16' height='16' fill='white' />
+                      </clipPath>
+                    </defs>
+                  </svg>
+                )}
                 <div className='currency-dropdown-wrapper'>
                   <CustomDropdown
                     onSelectSetting={setCurrency}

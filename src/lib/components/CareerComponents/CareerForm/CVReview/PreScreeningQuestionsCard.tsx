@@ -2,6 +2,18 @@
 
 import { useState } from 'react';
 import '@/lib/styles/career-details-styles.scss';
+import CustomDropdown from '@/lib/components/CareerComponents/CustomDropdown';
+
+const currencyOptions = [
+  { name: 'PHP', symbol: '₱' },
+  { name: 'USD', symbol: '$' },
+  { name: 'EUR', symbol: '€' },
+  { name: 'GBP', symbol: '£' },
+  { name: 'JPY', symbol: '¥' },
+  { name: 'AUD', symbol: 'A$' },
+  { name: 'CAD', symbol: 'C$' },
+  { name: 'SGD', symbol: 'S$' },
+];
 
 const suggestedQuestions = [
   {
@@ -40,7 +52,12 @@ const questionTypes = [
   { value: 'range', label: 'Range', icon: 'sliders' },
 ];
 
-type QuestionType = 'short-answer' | 'long-answer' | 'dropdown' | 'checkboxes' | 'range';
+type QuestionType =
+  | 'short-answer'
+  | 'long-answer'
+  | 'dropdown'
+  | 'checkboxes'
+  | 'range';
 
 interface CustomQuestion {
   id: string;
@@ -64,10 +81,16 @@ export default function PreScreeningQuestionsCard({
   const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>([]);
   const [isAddingCustom, setIsAddingCustom] = useState(false);
   const [showTypeDropdown, setShowTypeDropdown] = useState<string | null>(null);
-  const [questionCountToAsk, setQuestionCountToAsk] = useState<number | null>(null);
+  const [questionCountToAsk, setQuestionCountToAsk] = useState<number | null>(
+    null
+  );
+  const [allQuestionsOrder, setAllQuestionsOrder] = useState<
+    Array<{ type: 'suggested' | 'custom'; id: number | string }>
+  >([]);
 
   const handleAddQuestion = (questionId: number) => {
     setAddedQuestions((prev) => new Set(prev).add(questionId));
+    setAllQuestionsOrder((prev) => [...prev, { type: 'suggested', id: questionId }]);
     const question = suggestedQuestions.find((q) => q.id === questionId);
     if (question) {
       setQuestionValues((prev) => ({
@@ -96,6 +119,7 @@ export default function PreScreeningQuestionsCard({
     } else {
       setCustomQuestions((prev) => prev.filter((q) => q.id !== questionId));
     }
+    setAllQuestionsOrder((prev) => prev.filter((q) => q.id !== questionId));
   };
 
   const handleAddCustomQuestion = () => {
@@ -105,16 +129,24 @@ export default function PreScreeningQuestionsCard({
       type: 'short-answer',
     };
     setCustomQuestions((prev) => [...prev, newQuestion]);
+    setAllQuestionsOrder((prev) => [...prev, { type: 'custom', id: newQuestion.id }]);
     setIsAddingCustom(true);
   };
 
-  const handleUpdateCustomQuestion = (id: string, field: string, value: any) => {
+  const handleUpdateCustomQuestion = (
+    id: string,
+    field: string,
+    value: any
+  ) => {
     setCustomQuestions((prev) =>
       prev.map((q) => (q.id === id ? { ...q, [field]: value } : q))
     );
   };
 
-  const handleChangeQuestionType = (id: string | number, type: QuestionType) => {
+  const handleChangeQuestionType = (
+    id: string | number,
+    type: QuestionType
+  ) => {
     if (typeof id === 'number') {
       // Suggested question
       setQuestionValues((prev) => {
@@ -216,7 +248,10 @@ export default function PreScreeningQuestionsCard({
     }
   };
 
-  const handleRemoveOption = (questionId: number | string, optionIndex: number) => {
+  const handleRemoveOption = (
+    questionId: number | string,
+    optionIndex: number
+  ) => {
     if (typeof questionId === 'number') {
       setQuestionValues((prev) => {
         const currentOptions = prev[questionId]?.options || [];
@@ -245,7 +280,7 @@ export default function PreScreeningQuestionsCard({
 
   const handleUpdateRange = (
     questionId: number | string,
-    field: 'minimum' | 'maximum',
+    field: 'minimum' | 'maximum' | 'currency',
     value: string
   ) => {
     if (typeof questionId === 'number') {
@@ -256,19 +291,93 @@ export default function PreScreeningQuestionsCard({
           [field]: value,
         },
       }));
+    } else {
+      setCustomQuestions((prev) =>
+        prev.map((q) => (q.id === questionId ? { ...q, [field]: value } : q))
+      );
     }
   };
 
-  const renderCustomQuestionField = (question: CustomQuestion) => {
+  const handleReorderQuestions = (
+    draggedQuestionId: number | string,
+    draggedQuestionType: 'suggested' | 'custom',
+    targetIndex: number
+  ) => {
+    const updatedOrder = [...allQuestionsOrder];
+    const draggedIndex = updatedOrder.findIndex(
+      (q) => q.id === draggedQuestionId && q.type === draggedQuestionType
+    );
+
+    if (draggedIndex === -1) return;
+
+    const [draggedQuestion] = updatedOrder.splice(draggedIndex, 1);
+    updatedOrder.splice(targetIndex, 0, draggedQuestion);
+
+    setAllQuestionsOrder(updatedOrder);
+  };
+
+  const renderCustomQuestionField = (question: CustomQuestion, index: number) => {
     return (
-      <div key={question.id} className='added-question-wrapper'>
+      <div
+        key={question.id}
+        className='added-question-wrapper'
+        draggable={true}
+        onDragStart={(e) => {
+          e.dataTransfer.setData('questionId', question.id.toString());
+          e.dataTransfer.setData('questionType', 'custom');
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          const target = e.currentTarget;
+          const bounding = target.getBoundingClientRect();
+          const offset = bounding.y + bounding.height / 2;
+
+          if (e.clientY - offset > 0) {
+            target.style.borderBottom = '2px solid #5E5ADB';
+            target.style.borderTop = 'none';
+          } else {
+            target.style.borderTop = '2px solid #5E5ADB';
+            target.style.borderBottom = 'none';
+          }
+        }}
+        onDragLeave={(e) => {
+          e.currentTarget.style.borderTop = 'none';
+          e.currentTarget.style.borderBottom = 'none';
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.currentTarget.style.borderTop = 'none';
+          e.currentTarget.style.borderBottom = 'none';
+
+          const draggedQuestionId = e.dataTransfer.getData('questionId');
+          const draggedQuestionType = e.dataTransfer.getData('questionType') as
+            | 'suggested'
+            | 'custom';
+
+          if (draggedQuestionId) {
+            const bounding = e.currentTarget.getBoundingClientRect();
+            const offset = bounding.y + bounding.height / 2;
+            const insertIndex = e.clientY - offset > 0 ? index + 1 : index;
+
+            const parsedId =
+              draggedQuestionType === 'suggested'
+                ? Number(draggedQuestionId)
+                : draggedQuestionId;
+
+            handleReorderQuestions(parsedId, draggedQuestionType, insertIndex);
+          }
+        }}
+      >
         <button
           type='button'
           className='question-drag-handle'
           aria-label='Drag to reorder question'
         >
           <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-            <path d='M5.83333 3.33333H3.33333V5.83333H5.83333V3.33333ZM5.83333 8.33333H3.33333V10.8333H5.83333V8.33333ZM5.83333 13.3333H3.33333V15.8333H5.83333V13.3333ZM10.8333 3.33333H8.33333V5.83333H10.8333V3.33333ZM10.8333 8.33333H8.33333V10.8333H10.8333V8.33333ZM10.8333 13.3333H8.33333V15.8333H10.8333V13.3333ZM15.8333 3.33333H13.3333V5.83333H15.8333V3.33333ZM15.8333 8.33333H13.3333V10.8333H15.8333V8.33333ZM15.8333 13.3333H13.3333V15.8333H15.8333V13.3333Z' fill='#A4A7AE'/>
+            <path
+              d='M5.83333 3.33333H3.33333V5.83333H5.83333V3.33333ZM5.83333 8.33333H3.33333V10.8333H5.83333V8.33333ZM5.83333 13.3333H3.33333V15.8333H5.83333V13.3333ZM10.8333 3.33333H8.33333V5.83333H10.8333V3.33333ZM10.8333 8.33333H8.33333V10.8333H10.8333V8.33333ZM10.8333 13.3333H8.33333V15.8333H10.8333V13.3333ZM15.8333 3.33333H13.3333V5.83333H15.8333V3.33333ZM15.8333 8.33333H13.3333V10.8333H15.8333V8.33333ZM15.8333 13.3333H13.3333V15.8333H15.8333V13.3333Z'
+              fill='#A4A7AE'
+            />
           </svg>
         </button>
         <div className='question-field'>
@@ -279,7 +388,11 @@ export default function PreScreeningQuestionsCard({
                 className='question-label-input'
                 value={question.question}
                 onChange={(e) =>
-                  handleUpdateCustomQuestion(question.id, 'question', e.target.value)
+                  handleUpdateCustomQuestion(
+                    question.id,
+                    'question',
+                    e.target.value
+                  )
                 }
                 placeholder='Enter your question'
               />
@@ -297,7 +410,13 @@ export default function PreScreeningQuestionsCard({
                 {getTypeIcon(question.type)}
                 <span>{getTypeLabel(question.type)}</span>
                 <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-                  <path d='M5 8.33333L10 13.3333L15 8.33333' stroke='currentColor' strokeWidth='1.67' strokeLinecap='round' strokeLinejoin='round'/>
+                  <path
+                    d='M5 8.33333L10 13.3333L15 8.33333'
+                    stroke='currentColor'
+                    strokeWidth='1.67'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
                 </svg>
               </button>
               {showTypeDropdown === question.id && (
@@ -310,14 +429,29 @@ export default function PreScreeningQuestionsCard({
                         question.type === type.value ? 'selected' : ''
                       }`}
                       onClick={() =>
-                        handleChangeQuestionType(question.id, type.value as QuestionType)
+                        handleChangeQuestionType(
+                          question.id,
+                          type.value as QuestionType
+                        )
                       }
                     >
                       {getTypeIcon(type.value as QuestionType)}
                       <span>{type.label}</span>
                       {question.type === type.value && (
-                        <svg width='16' height='16' viewBox='0 0 16 16' fill='none' className='checkmark'>
-                          <path d='M13.3333 4L6 11.3333L2.66667 8' stroke='#5E5ADB' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                        <svg
+                          width='16'
+                          height='16'
+                          viewBox='0 0 16 16'
+                          fill='none'
+                          className='checkmark'
+                        >
+                          <path
+                            d='M13.3333 4L6 11.3333L2.66667 8'
+                            stroke='#5E5ADB'
+                            strokeWidth='2'
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                          />
                         </svg>
                       )}
                     </button>
@@ -371,7 +505,10 @@ export default function PreScreeningQuestionsCard({
                     onClick={() => handleRemoveOption(question.id, index)}
                   >
                     <svg width='14' height='14' viewBox='0 0 14 14' fill='none'>
-                      <path d='M14 1.41L12.59 0L7 5.59L1.41 0L0 1.41L5.59 7L0 12.59L1.41 14L7 8.41L12.59 14L14 12.59L8.41 7L14 1.41Z' fill='#666'/>
+                      <path
+                        d='M14 1.41L12.59 0L7 5.59L1.41 0L0 1.41L5.59 7L0 12.59L1.41 14L7 8.41L12.59 14L14 12.59L8.41 7L14 1.41Z'
+                        fill='#666'
+                      />
                     </svg>
                   </button>
                 </div>
@@ -382,7 +519,13 @@ export default function PreScreeningQuestionsCard({
                 onClick={() => handleAddOption(question.id)}
               >
                 <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-                  <path d='M8 4V12M4 8H12' stroke='currentColor' strokeWidth='1.67' strokeLinecap='round' strokeLinejoin='round'/>
+                  <path
+                    d='M8 4V12M4 8H12'
+                    stroke='currentColor'
+                    strokeWidth='1.67'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
                 </svg>
                 <span>Add Option</span>
               </button>
@@ -393,30 +536,56 @@ export default function PreScreeningQuestionsCard({
             <div className='range-inputs'>
               <div className='range-input-group'>
                 <label className='range-label'>Minimum</label>
-                <div className='currency-input'>
-                  <span className='currency-symbol'>{question.currency || 'PHP'}</span>
-                  <input
-                    type='number'
-                    className='range-input'
-                    placeholder='40,000'
-                  />
-                  <select className='currency-select'>
-                    <option>PHP</option>
-                  </select>
+                <div className='salary-input-container'>
+                  <div className='salary-input-content'>
+                    <span className='currency-prefix'>
+                      {currencyOptions.find((c) => c.name === question.currency)
+                        ?.symbol || '₱'}
+                    </span>
+                    <input
+                      type='number'
+                      className='salary-input-field'
+                      placeholder='0'
+                      min={0}
+                    />
+                  </div>
+                  <div className='currency-dropdown-wrapper'>
+                    <CustomDropdown
+                      onSelectSetting={(value: string) =>
+                        handleUpdateRange(question.id, 'currency', value)
+                      }
+                      screeningSetting={question.currency || 'PHP'}
+                      settingList={currencyOptions}
+                      placeholder='PHP'
+                    />
+                  </div>
                 </div>
               </div>
               <div className='range-input-group'>
                 <label className='range-label'>Maximum</label>
-                <div className='currency-input'>
-                  <span className='currency-symbol'>{question.currency || 'PHP'}</span>
-                  <input
-                    type='number'
-                    className='range-input'
-                    placeholder='60,000'
-                  />
-                  <select className='currency-select'>
-                    <option>PHP</option>
-                  </select>
+                <div className='salary-input-container'>
+                  <div className='salary-input-content'>
+                    <span className='currency-prefix'>
+                      {currencyOptions.find((c) => c.name === question.currency)
+                        ?.symbol || '₱'}
+                    </span>
+                    <input
+                      type='number'
+                      className='salary-input-field'
+                      placeholder='0'
+                      min={0}
+                    />
+                  </div>
+                  <div className='currency-dropdown-wrapper'>
+                    <CustomDropdown
+                      onSelectSetting={(value: string) =>
+                        handleUpdateRange(question.id, 'currency', value)
+                      }
+                      screeningSetting={question.currency || 'PHP'}
+                      settingList={currencyOptions}
+                      placeholder='PHP'
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -430,8 +599,20 @@ export default function PreScreeningQuestionsCard({
               onClick={() => handleDeleteQuestion(question.id)}
             >
               <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-                <path d='M2 4H14M12.6667 4V13.3333C12.6667 14.0667 12.0667 14.6667 11.3333 14.6667H4.66667C3.93333 14.6667 3.33333 14.0667 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93333 5.93333 1.33333 6.66667 1.33333H9.33333C10.0667 1.33333 10.6667 1.93333 10.6667 2.66667V4' stroke='currentColor' strokeWidth='1.33' strokeLinecap='round' strokeLinejoin='round'/>
-                <path d='M6.66667 7.33333V11.3333M9.33333 7.33333V11.3333' stroke='currentColor' strokeWidth='1.33' strokeLinecap='round' strokeLinejoin='round'/>
+                <path
+                  d='M2 4H14M12.6667 4V13.3333C12.6667 14.0667 12.0667 14.6667 11.3333 14.6667H4.66667C3.93333 14.6667 3.33333 14.0667 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93333 5.93333 1.33333 6.66667 1.33333H9.33333C10.0667 1.33333 10.6667 1.93333 10.6667 2.66667V4'
+                  stroke='currentColor'
+                  strokeWidth='1.33'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
+                <path
+                  d='M6.66667 7.33333V11.3333M9.33333 7.33333V11.3333'
+                  stroke='currentColor'
+                  strokeWidth='1.33'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                />
               </svg>
               <span>Delete Question</span>
             </button>
@@ -446,31 +627,54 @@ export default function PreScreeningQuestionsCard({
       case 'short-answer':
         return (
           <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-            <path d='M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8Z' stroke='currentColor' strokeWidth='1.5'/>
-            <path d='M3 14C3 11.7909 5.23858 10 8 10C10.7614 10 13 11.7909 13 14' stroke='currentColor' strokeWidth='1.5'/>
+            <path
+              d='M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8Z'
+              stroke='currentColor'
+              strokeWidth='1.5'
+            />
+            <path
+              d='M3 14C3 11.7909 5.23858 10 8 10C10.7614 10 13 11.7909 13 14'
+              stroke='currentColor'
+              strokeWidth='1.5'
+            />
           </svg>
         );
       case 'long-answer':
         return (
           <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-            <path d='M2 3H14M2 6H14M2 9H14M2 12H10' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'/>
+            <path
+              d='M2 3H14M2 6H14M2 9H14M2 12H10'
+              stroke='currentColor'
+              strokeWidth='1.5'
+              strokeLinecap='round'
+            />
           </svg>
         );
       case 'dropdown':
       case 'checkboxes':
         return (
           <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-            <circle cx='8' cy='5' r='2' stroke='currentColor' strokeWidth='1.5'/>
-            <path d='M3 13C3 10.7909 5.23858 9 8 9C10.7614 9 13 10.7909 13 13' stroke='currentColor' strokeWidth='1.5'/>
+            <circle
+              cx='8'
+              cy='5'
+              r='2'
+              stroke='currentColor'
+              strokeWidth='1.5'
+            />
+            <path
+              d='M3 13C3 10.7909 5.23858 9 8 9C10.7614 9 13 10.7909 13 13'
+              stroke='currentColor'
+              strokeWidth='1.5'
+            />
           </svg>
         );
       case 'range':
         return (
           <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-            <circle cx='4' cy='4' r='1.5' fill='currentColor'/>
-            <circle cx='12' cy='4' r='1.5' fill='currentColor'/>
-            <circle cx='4' cy='12' r='1.5' fill='currentColor'/>
-            <circle cx='12' cy='12' r='1.5' fill='currentColor'/>
+            <circle cx='4' cy='4' r='1.5' fill='currentColor' />
+            <circle cx='12' cy='4' r='1.5' fill='currentColor' />
+            <circle cx='4' cy='12' r='1.5' fill='currentColor' />
+            <circle cx='12' cy='12' r='1.5' fill='currentColor' />
           </svg>
         );
     }
@@ -481,23 +685,85 @@ export default function PreScreeningQuestionsCard({
     return typeObj?.label || type;
   };
 
-  const renderSuggestedQuestionField = (question: typeof suggestedQuestions[0]) => {
+  const renderSuggestedQuestionField = (
+    question: (typeof suggestedQuestions)[0],
+    index: number
+  ) => {
     const isAdded = addedQuestions.has(question.id);
     if (!isAdded) return null;
 
-    const currentType = (questionValues[question.id]?.type || question.type) as QuestionType;
+    const currentType = (questionValues[question.id]?.type ||
+      question.type) as QuestionType;
 
     if (currentType === 'dropdown' || currentType === 'checkboxes') {
       const isNoticePeriod = question.id === 1;
       const allOptions = isNoticePeriod
         ? questionValues[question.id]?.allOptions || question.options
-        : [...question.options, ...(questionValues[question.id]?.options || [])];
+        : [
+            ...question.options,
+            ...(questionValues[question.id]?.options || []),
+          ];
 
       return (
-        <div className='added-question-wrapper'>
-          <button type='button' className='question-drag-handle' aria-label='Drag to reorder question'>
+        <div
+          className='added-question-wrapper'
+          draggable={true}
+          onDragStart={(e) => {
+            e.dataTransfer.setData('questionId', question.id.toString());
+            e.dataTransfer.setData('questionType', 'suggested');
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            const target = e.currentTarget;
+            const bounding = target.getBoundingClientRect();
+            const offset = bounding.y + bounding.height / 2;
+
+            if (e.clientY - offset > 0) {
+              target.style.borderBottom = '2px solid #5E5ADB';
+              target.style.borderTop = 'none';
+            } else {
+              target.style.borderTop = '2px solid #5E5ADB';
+              target.style.borderBottom = 'none';
+            }
+          }}
+          onDragLeave={(e) => {
+            e.currentTarget.style.borderTop = 'none';
+            e.currentTarget.style.borderBottom = 'none';
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderTop = 'none';
+            e.currentTarget.style.borderBottom = 'none';
+
+            const draggedQuestionId = e.dataTransfer.getData('questionId');
+            const draggedQuestionType = e.dataTransfer.getData('questionType') as
+              | 'suggested'
+              | 'custom';
+
+            if (draggedQuestionId) {
+              const bounding = e.currentTarget.getBoundingClientRect();
+              const offset = bounding.y + bounding.height / 2;
+              const insertIndex = e.clientY - offset > 0 ? index + 1 : index;
+
+              const parsedId =
+                draggedQuestionType === 'suggested'
+                  ? Number(draggedQuestionId)
+                  : draggedQuestionId;
+
+              handleReorderQuestions(parsedId, draggedQuestionType, insertIndex);
+            }
+          }}
+        >
+          <button
+            type='button'
+            className='question-drag-handle'
+            aria-label='Drag to reorder question'
+          >
             <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-              <path d='M5.83333 3.33333H3.33333V5.83333H5.83333V3.33333ZM5.83333 8.33333H3.33333V10.8333H5.83333V8.33333ZM5.83333 13.3333H3.33333V15.8333H5.83333V13.3333ZM10.8333 3.33333H8.33333V5.83333H10.8333V3.33333ZM10.8333 8.33333H8.33333V10.8333H10.8333V8.33333ZM10.8333 13.3333H8.33333V15.8333H10.8333V13.3333ZM15.8333 3.33333H13.3333V5.83333H15.8333V3.33333ZM15.8333 8.33333H13.3333V10.8333H15.8333V8.33333ZM15.8333 13.3333H13.3333V15.8333H15.8333V13.3333Z' fill='#A4A7AE'/>
+              <path
+                d='M5.83333 3.33333H3.33333V5.83333H5.83333V3.33333ZM5.83333 8.33333H3.33333V10.8333H5.83333V8.33333ZM5.83333 13.3333H3.33333V15.8333H5.83333V13.3333ZM10.8333 3.33333H8.33333V5.83333H10.8333V3.33333ZM10.8333 8.33333H8.33333V10.8333H10.8333V8.33333ZM10.8333 13.3333H8.33333V15.8333H10.8333V13.3333ZM15.8333 3.33333H13.3333V5.83333H15.8333V3.33333ZM15.8333 8.33333H13.3333V10.8333H15.8333V8.33333ZM15.8333 13.3333H13.3333V15.8333H15.8333V13.3333Z'
+                fill='#A4A7AE'
+              />
             </svg>
           </button>
           <div className='question-field'>
@@ -511,14 +777,22 @@ export default function PreScreeningQuestionsCard({
                   className='question-type-dropdown-trigger'
                   onClick={() =>
                     setShowTypeDropdown(
-                      showTypeDropdown === `suggested-${question.id}` ? null : `suggested-${question.id}`
+                      showTypeDropdown === `suggested-${question.id}`
+                        ? null
+                        : `suggested-${question.id}`
                     )
                   }
                 >
                   {getTypeIcon(currentType)}
                   <span>{getTypeLabel(currentType)}</span>
                   <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-                    <path d='M5 8.33333L10 13.3333L15 8.33333' stroke='currentColor' strokeWidth='1.67' strokeLinecap='round' strokeLinejoin='round'/>
+                    <path
+                      d='M5 8.33333L10 13.3333L15 8.33333'
+                      stroke='currentColor'
+                      strokeWidth='1.67'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                    />
                   </svg>
                 </button>
                 {showTypeDropdown === `suggested-${question.id}` && (
@@ -531,14 +805,29 @@ export default function PreScreeningQuestionsCard({
                           currentType === type.value ? 'selected' : ''
                         }`}
                         onClick={() =>
-                          handleChangeQuestionType(question.id, type.value as QuestionType)
+                          handleChangeQuestionType(
+                            question.id,
+                            type.value as QuestionType
+                          )
                         }
                       >
                         {getTypeIcon(type.value as QuestionType)}
                         <span>{type.label}</span>
                         {currentType === type.value && (
-                          <svg width='16' height='16' viewBox='0 0 16 16' fill='none' className='checkmark'>
-                            <path d='M13.3333 4L6 11.3333L2.66667 8' stroke='#5E5ADB' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                          <svg
+                            width='16'
+                            height='16'
+                            viewBox='0 0 16 16'
+                            fill='none'
+                            className='checkmark'
+                          >
+                            <path
+                              d='M13.3333 4L6 11.3333L2.66667 8'
+                              stroke='#5E5ADB'
+                              strokeWidth='2'
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                            />
                           </svg>
                         )}
                       </button>
@@ -550,7 +839,8 @@ export default function PreScreeningQuestionsCard({
 
             <div className='dropdown-options-list'>
               {allOptions.map((option, index) => {
-                const isCustomOption = !isNoticePeriod && index >= question.options.length;
+                const isCustomOption =
+                  !isNoticePeriod && index >= question.options.length;
                 const isEditable = isNoticePeriod || isCustomOption;
 
                 return (
@@ -565,16 +855,25 @@ export default function PreScreeningQuestionsCard({
                           onChange={(e) => {
                             if (isNoticePeriod) {
                               setQuestionValues((prev) => {
-                                const currentOptions = prev[question.id]?.allOptions || question.options;
+                                const currentOptions =
+                                  prev[question.id]?.allOptions ||
+                                  question.options;
                                 const newOptions = [...currentOptions];
                                 newOptions[index] = e.target.value;
                                 return {
                                   ...prev,
-                                  [question.id]: { ...prev[question.id], allOptions: newOptions },
+                                  [question.id]: {
+                                    ...prev[question.id],
+                                    allOptions: newOptions,
+                                  },
                                 };
                               });
                             } else {
-                              handleUpdateOption(question.id, index - question.options.length, e.target.value);
+                              handleUpdateOption(
+                                question.id,
+                                index - question.options.length,
+                                e.target.value
+                              );
                             }
                           }}
                           placeholder='Enter option'
@@ -590,39 +889,83 @@ export default function PreScreeningQuestionsCard({
                         onClick={() => {
                           if (isNoticePeriod) {
                             setQuestionValues((prev) => {
-                              const currentOptions = prev[question.id]?.allOptions || question.options;
-                              const newOptions = currentOptions.filter((_, idx) => idx !== index);
+                              const currentOptions =
+                                prev[question.id]?.allOptions ||
+                                question.options;
+                              const newOptions = currentOptions.filter(
+                                (_, idx) => idx !== index
+                              );
                               return {
                                 ...prev,
-                                [question.id]: { ...prev[question.id], allOptions: newOptions },
+                                [question.id]: {
+                                  ...prev[question.id],
+                                  allOptions: newOptions,
+                                },
                               };
                             });
                           } else {
-                            handleRemoveOption(question.id, index - question.options.length);
+                            handleRemoveOption(
+                              question.id,
+                              index - question.options.length
+                            );
                           }
                         }}
                       >
-                        <svg width='14' height='14' viewBox='0 0 14 14' fill='none'>
-                          <path d='M14 1.41L12.59 0L7 5.59L1.41 0L0 1.41L5.59 7L0 12.59L1.41 14L7 8.41L12.59 14L14 12.59L8.41 7L14 1.41Z' fill='#666'/>
+                        <svg
+                          width='14'
+                          height='14'
+                          viewBox='0 0 14 14'
+                          fill='none'
+                        >
+                          <path
+                            d='M14 1.41L12.59 0L7 5.59L1.41 0L0 1.41L5.59 7L0 12.59L1.41 14L7 8.41L12.59 14L14 12.59L8.41 7L14 1.41Z'
+                            fill='#666'
+                          />
                         </svg>
                       </button>
                     )}
                   </div>
                 );
               })}
-              <button type='button' className='add-option-button' onClick={() => handleAddOption(question.id)}>
+              <button
+                type='button'
+                className='add-option-button'
+                onClick={() => handleAddOption(question.id)}
+              >
                 <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-                  <path d='M8 4V12M4 8H12' stroke='currentColor' strokeWidth='1.67' strokeLinecap='round' strokeLinejoin='round'/>
+                  <path
+                    d='M8 4V12M4 8H12'
+                    stroke='currentColor'
+                    strokeWidth='1.67'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
                 </svg>
                 <span>Add Option</span>
               </button>
             </div>
             <div className='question-divider'></div>
             <div className='question-actions'>
-              <button type='button' className='delete-question-button' onClick={() => handleDeleteQuestion(question.id)}>
+              <button
+                type='button'
+                className='delete-question-button'
+                onClick={() => handleDeleteQuestion(question.id)}
+              >
                 <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-                  <path d='M2 4H14M12.6667 4V13.3333C12.6667 14.0667 12.0667 14.6667 11.3333 14.6667H4.66667C3.93333 14.6667 3.33333 14.0667 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93333 5.93333 1.33333 6.66667 1.33333H9.33333C10.0667 1.33333 10.6667 1.93333 10.6667 2.66667V4' stroke='currentColor' strokeWidth='1.33' strokeLinecap='round' strokeLinejoin='round'/>
-                  <path d='M6.66667 7.33333V11.3333M9.33333 7.33333V11.3333' stroke='currentColor' strokeWidth='1.33' strokeLinecap='round' strokeLinejoin='round'/>
+                  <path
+                    d='M2 4H14M12.6667 4V13.3333C12.6667 14.0667 12.0667 14.6667 11.3333 14.6667H4.66667C3.93333 14.6667 3.33333 14.0667 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93333 5.93333 1.33333 6.66667 1.33333H9.33333C10.0667 1.33333 10.6667 1.93333 10.6667 2.66667V4'
+                    stroke='currentColor'
+                    strokeWidth='1.33'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
+                  <path
+                    d='M6.66667 7.33333V11.3333M9.33333 7.33333V11.3333'
+                    stroke='currentColor'
+                    strokeWidth='1.33'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
                 </svg>
                 <span>Delete Question</span>
               </button>
@@ -634,10 +977,65 @@ export default function PreScreeningQuestionsCard({
 
     if (currentType === 'short-answer') {
       return (
-        <div className='added-question-wrapper'>
-          <button type='button' className='question-drag-handle' aria-label='Drag to reorder question'>
+        <div
+          className='added-question-wrapper'
+          draggable={true}
+          onDragStart={(e) => {
+            e.dataTransfer.setData('questionId', question.id.toString());
+            e.dataTransfer.setData('questionType', 'suggested');
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            const target = e.currentTarget;
+            const bounding = target.getBoundingClientRect();
+            const offset = bounding.y + bounding.height / 2;
+
+            if (e.clientY - offset > 0) {
+              target.style.borderBottom = '2px solid #5E5ADB';
+              target.style.borderTop = 'none';
+            } else {
+              target.style.borderTop = '2px solid #5E5ADB';
+              target.style.borderBottom = 'none';
+            }
+          }}
+          onDragLeave={(e) => {
+            e.currentTarget.style.borderTop = 'none';
+            e.currentTarget.style.borderBottom = 'none';
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderTop = 'none';
+            e.currentTarget.style.borderBottom = 'none';
+
+            const draggedQuestionId = e.dataTransfer.getData('questionId');
+            const draggedQuestionType = e.dataTransfer.getData('questionType') as
+              | 'suggested'
+              | 'custom';
+
+            if (draggedQuestionId) {
+              const bounding = e.currentTarget.getBoundingClientRect();
+              const offset = bounding.y + bounding.height / 2;
+              const insertIndex = e.clientY - offset > 0 ? index + 1 : index;
+
+              const parsedId =
+                draggedQuestionType === 'suggested'
+                  ? Number(draggedQuestionId)
+                  : draggedQuestionId;
+
+              handleReorderQuestions(parsedId, draggedQuestionType, insertIndex);
+            }
+          }}
+        >
+          <button
+            type='button'
+            className='question-drag-handle'
+            aria-label='Drag to reorder question'
+          >
             <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-              <path d='M5.83333 3.33333H3.33333V5.83333H5.83333V3.33333ZM5.83333 8.33333H3.33333V10.8333H5.83333V8.33333ZM5.83333 13.3333H3.33333V15.8333H5.83333V13.3333ZM10.8333 3.33333H8.33333V5.83333H10.8333V3.33333ZM10.8333 8.33333H8.33333V10.8333H10.8333V8.33333ZM10.8333 13.3333H8.33333V15.8333H10.8333V13.3333ZM15.8333 3.33333H13.3333V5.83333H15.8333V3.33333ZM15.8333 8.33333H13.3333V10.8333H15.8333V8.33333ZM15.8333 13.3333H13.3333V15.8333H15.8333V13.3333Z' fill='#A4A7AE'/>
+              <path
+                d='M5.83333 3.33333H3.33333V5.83333H5.83333V3.33333ZM5.83333 8.33333H3.33333V10.8333H5.83333V8.33333ZM5.83333 13.3333H3.33333V15.8333H5.83333V13.3333ZM10.8333 3.33333H8.33333V5.83333H10.8333V3.33333ZM10.8333 8.33333H8.33333V10.8333H10.8333V8.33333ZM10.8333 13.3333H8.33333V15.8333H10.8333V13.3333ZM15.8333 3.33333H13.3333V5.83333H15.8333V3.33333ZM15.8333 8.33333H13.3333V10.8333H15.8333V8.33333ZM15.8333 13.3333H13.3333V15.8333H15.8333V13.3333Z'
+                fill='#A4A7AE'
+              />
             </svg>
           </button>
           <div className='question-field'>
@@ -651,14 +1049,22 @@ export default function PreScreeningQuestionsCard({
                   className='question-type-dropdown-trigger'
                   onClick={() =>
                     setShowTypeDropdown(
-                      showTypeDropdown === `suggested-${question.id}` ? null : `suggested-${question.id}`
+                      showTypeDropdown === `suggested-${question.id}`
+                        ? null
+                        : `suggested-${question.id}`
                     )
                   }
                 >
                   {getTypeIcon(currentType)}
                   <span>{getTypeLabel(currentType)}</span>
                   <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-                    <path d='M5 8.33333L10 13.3333L15 8.33333' stroke='currentColor' strokeWidth='1.67' strokeLinecap='round' strokeLinejoin='round'/>
+                    <path
+                      d='M5 8.33333L10 13.3333L15 8.33333'
+                      stroke='currentColor'
+                      strokeWidth='1.67'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                    />
                   </svg>
                 </button>
                 {showTypeDropdown === `suggested-${question.id}` && (
@@ -671,14 +1077,29 @@ export default function PreScreeningQuestionsCard({
                           currentType === type.value ? 'selected' : ''
                         }`}
                         onClick={() =>
-                          handleChangeQuestionType(question.id, type.value as QuestionType)
+                          handleChangeQuestionType(
+                            question.id,
+                            type.value as QuestionType
+                          )
                         }
                       >
                         {getTypeIcon(type.value as QuestionType)}
                         <span>{type.label}</span>
                         {currentType === type.value && (
-                          <svg width='16' height='16' viewBox='0 0 16 16' fill='none' className='checkmark'>
-                            <path d='M13.3333 4L6 11.3333L2.66667 8' stroke='#5E5ADB' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                          <svg
+                            width='16'
+                            height='16'
+                            viewBox='0 0 16 16'
+                            fill='none'
+                            className='checkmark'
+                          >
+                            <path
+                              d='M13.3333 4L6 11.3333L2.66667 8'
+                              stroke='#5E5ADB'
+                              strokeWidth='2'
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                            />
                           </svg>
                         )}
                       </button>
@@ -697,10 +1118,26 @@ export default function PreScreeningQuestionsCard({
             </div>
             <div className='question-actions'>
               <div className='question-divider'></div>
-              <button type='button' className='delete-question-button' onClick={() => handleDeleteQuestion(question.id)}>
+              <button
+                type='button'
+                className='delete-question-button'
+                onClick={() => handleDeleteQuestion(question.id)}
+              >
                 <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-                  <path d='M2 4H14M12.6667 4V13.3333C12.6667 14.0667 12.0667 14.6667 11.3333 14.6667H4.66667C3.93333 14.6667 3.33333 14.0667 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93333 5.93333 1.33333 6.66667 1.33333H9.33333C10.0667 1.33333 10.6667 1.93333 10.6667 2.66667V4' stroke='currentColor' strokeWidth='1.33' strokeLinecap='round' strokeLinejoin='round'/>
-                  <path d='M6.66667 7.33333V11.3333M9.33333 7.33333V11.3333' stroke='currentColor' strokeWidth='1.33' strokeLinecap='round' strokeLinejoin='round'/>
+                  <path
+                    d='M2 4H14M12.6667 4V13.3333C12.6667 14.0667 12.0667 14.6667 11.3333 14.6667H4.66667C3.93333 14.6667 3.33333 14.0667 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93333 5.93333 1.33333 6.66667 1.33333H9.33333C10.0667 1.33333 10.6667 1.93333 10.6667 2.66667V4'
+                    stroke='currentColor'
+                    strokeWidth='1.33'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
+                  <path
+                    d='M6.66667 7.33333V11.3333M9.33333 7.33333V11.3333'
+                    stroke='currentColor'
+                    strokeWidth='1.33'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
                 </svg>
                 <span>Delete Question</span>
               </button>
@@ -712,10 +1149,65 @@ export default function PreScreeningQuestionsCard({
 
     if (currentType === 'long-answer') {
       return (
-        <div className='added-question-wrapper'>
-          <button type='button' className='question-drag-handle' aria-label='Drag to reorder question'>
+        <div
+          className='added-question-wrapper'
+          draggable={true}
+          onDragStart={(e) => {
+            e.dataTransfer.setData('questionId', question.id.toString());
+            e.dataTransfer.setData('questionType', 'suggested');
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            const target = e.currentTarget;
+            const bounding = target.getBoundingClientRect();
+            const offset = bounding.y + bounding.height / 2;
+
+            if (e.clientY - offset > 0) {
+              target.style.borderBottom = '2px solid #5E5ADB';
+              target.style.borderTop = 'none';
+            } else {
+              target.style.borderTop = '2px solid #5E5ADB';
+              target.style.borderBottom = 'none';
+            }
+          }}
+          onDragLeave={(e) => {
+            e.currentTarget.style.borderTop = 'none';
+            e.currentTarget.style.borderBottom = 'none';
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderTop = 'none';
+            e.currentTarget.style.borderBottom = 'none';
+
+            const draggedQuestionId = e.dataTransfer.getData('questionId');
+            const draggedQuestionType = e.dataTransfer.getData('questionType') as
+              | 'suggested'
+              | 'custom';
+
+            if (draggedQuestionId) {
+              const bounding = e.currentTarget.getBoundingClientRect();
+              const offset = bounding.y + bounding.height / 2;
+              const insertIndex = e.clientY - offset > 0 ? index + 1 : index;
+
+              const parsedId =
+                draggedQuestionType === 'suggested'
+                  ? Number(draggedQuestionId)
+                  : draggedQuestionId;
+
+              handleReorderQuestions(parsedId, draggedQuestionType, insertIndex);
+            }
+          }}
+        >
+          <button
+            type='button'
+            className='question-drag-handle'
+            aria-label='Drag to reorder question'
+          >
             <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-              <path d='M5.83333 3.33333H3.33333V5.83333H5.83333V3.33333ZM5.83333 8.33333H3.33333V10.8333H5.83333V8.33333ZM5.83333 13.3333H3.33333V15.8333H5.83333V13.3333ZM10.8333 3.33333H8.33333V5.83333H10.8333V3.33333ZM10.8333 8.33333H8.33333V10.8333H10.8333V8.33333ZM10.8333 13.3333H8.33333V15.8333H10.8333V13.3333ZM15.8333 3.33333H13.3333V5.83333H15.8333V3.33333ZM15.8333 8.33333H13.3333V10.8333H15.8333V8.33333ZM15.8333 13.3333H13.3333V15.8333H15.8333V13.3333Z' fill='#A4A7AE'/>
+              <path
+                d='M5.83333 3.33333H3.33333V5.83333H5.83333V3.33333ZM5.83333 8.33333H3.33333V10.8333H5.83333V8.33333ZM5.83333 13.3333H3.33333V15.8333H5.83333V13.3333ZM10.8333 3.33333H8.33333V5.83333H10.8333V3.33333ZM10.8333 8.33333H8.33333V10.8333H10.8333V8.33333ZM10.8333 13.3333H8.33333V15.8333H10.8333V13.3333ZM15.8333 3.33333H13.3333V5.83333H15.8333V3.33333ZM15.8333 8.33333H13.3333V10.8333H15.8333V8.33333ZM15.8333 13.3333H13.3333V15.8333H15.8333V13.3333Z'
+                fill='#A4A7AE'
+              />
             </svg>
           </button>
           <div className='question-field'>
@@ -729,14 +1221,22 @@ export default function PreScreeningQuestionsCard({
                   className='question-type-dropdown-trigger'
                   onClick={() =>
                     setShowTypeDropdown(
-                      showTypeDropdown === `suggested-${question.id}` ? null : `suggested-${question.id}`
+                      showTypeDropdown === `suggested-${question.id}`
+                        ? null
+                        : `suggested-${question.id}`
                     )
                   }
                 >
                   {getTypeIcon(currentType)}
                   <span>{getTypeLabel(currentType)}</span>
                   <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-                    <path d='M5 8.33333L10 13.3333L15 8.33333' stroke='currentColor' strokeWidth='1.67' strokeLinecap='round' strokeLinejoin='round'/>
+                    <path
+                      d='M5 8.33333L10 13.3333L15 8.33333'
+                      stroke='currentColor'
+                      strokeWidth='1.67'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                    />
                   </svg>
                 </button>
                 {showTypeDropdown === `suggested-${question.id}` && (
@@ -749,14 +1249,29 @@ export default function PreScreeningQuestionsCard({
                           currentType === type.value ? 'selected' : ''
                         }`}
                         onClick={() =>
-                          handleChangeQuestionType(question.id, type.value as QuestionType)
+                          handleChangeQuestionType(
+                            question.id,
+                            type.value as QuestionType
+                          )
                         }
                       >
                         {getTypeIcon(type.value as QuestionType)}
                         <span>{type.label}</span>
                         {currentType === type.value && (
-                          <svg width='16' height='16' viewBox='0 0 16 16' fill='none' className='checkmark'>
-                            <path d='M13.3333 4L6 11.3333L2.66667 8' stroke='#5E5ADB' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                          <svg
+                            width='16'
+                            height='16'
+                            viewBox='0 0 16 16'
+                            fill='none'
+                            className='checkmark'
+                          >
+                            <path
+                              d='M13.3333 4L6 11.3333L2.66667 8'
+                              stroke='#5E5ADB'
+                              strokeWidth='2'
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                            />
                           </svg>
                         )}
                       </button>
@@ -775,10 +1290,26 @@ export default function PreScreeningQuestionsCard({
             </div>
             <div className='question-actions'>
               <div className='question-divider'></div>
-              <button type='button' className='delete-question-button' onClick={() => handleDeleteQuestion(question.id)}>
+              <button
+                type='button'
+                className='delete-question-button'
+                onClick={() => handleDeleteQuestion(question.id)}
+              >
                 <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-                  <path d='M2 4H14M12.6667 4V13.3333C12.6667 14.0667 12.0667 14.6667 11.3333 14.6667H4.66667C3.93333 14.6667 3.33333 14.0667 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93333 5.93333 1.33333 6.66667 1.33333H9.33333C10.0667 1.33333 10.6667 1.93333 10.6667 2.66667V4' stroke='currentColor' strokeWidth='1.33' strokeLinecap='round' strokeLinejoin='round'/>
-                  <path d='M6.66667 7.33333V11.3333M9.33333 7.33333V11.3333' stroke='currentColor' strokeWidth='1.33' strokeLinecap='round' strokeLinejoin='round'/>
+                  <path
+                    d='M2 4H14M12.6667 4V13.3333C12.6667 14.0667 12.0667 14.6667 11.3333 14.6667H4.66667C3.93333 14.6667 3.33333 14.0667 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93333 5.93333 1.33333 6.66667 1.33333H9.33333C10.0667 1.33333 10.6667 1.93333 10.6667 2.66667V4'
+                    stroke='currentColor'
+                    strokeWidth='1.33'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
+                  <path
+                    d='M6.66667 7.33333V11.3333M9.33333 7.33333V11.3333'
+                    stroke='currentColor'
+                    strokeWidth='1.33'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
                 </svg>
                 <span>Delete Question</span>
               </button>
@@ -791,12 +1322,68 @@ export default function PreScreeningQuestionsCard({
     if (currentType === 'range') {
       const minimum = questionValues[question.id]?.minimum || '';
       const maximum = questionValues[question.id]?.maximum || '';
+      const currency = questionValues[question.id]?.currency || question.currency || 'PHP';
 
       return (
-        <div className='added-question-wrapper'>
-          <button type='button' className='question-drag-handle' aria-label='Drag to reorder question'>
+        <div
+          className='added-question-wrapper'
+          draggable={true}
+          onDragStart={(e) => {
+            e.dataTransfer.setData('questionId', question.id.toString());
+            e.dataTransfer.setData('questionType', 'suggested');
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            const target = e.currentTarget;
+            const bounding = target.getBoundingClientRect();
+            const offset = bounding.y + bounding.height / 2;
+
+            if (e.clientY - offset > 0) {
+              target.style.borderBottom = '2px solid #5E5ADB';
+              target.style.borderTop = 'none';
+            } else {
+              target.style.borderTop = '2px solid #5E5ADB';
+              target.style.borderBottom = 'none';
+            }
+          }}
+          onDragLeave={(e) => {
+            e.currentTarget.style.borderTop = 'none';
+            e.currentTarget.style.borderBottom = 'none';
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.currentTarget.style.borderTop = 'none';
+            e.currentTarget.style.borderBottom = 'none';
+
+            const draggedQuestionId = e.dataTransfer.getData('questionId');
+            const draggedQuestionType = e.dataTransfer.getData('questionType') as
+              | 'suggested'
+              | 'custom';
+
+            if (draggedQuestionId) {
+              const bounding = e.currentTarget.getBoundingClientRect();
+              const offset = bounding.y + bounding.height / 2;
+              const insertIndex = e.clientY - offset > 0 ? index + 1 : index;
+
+              const parsedId =
+                draggedQuestionType === 'suggested'
+                  ? Number(draggedQuestionId)
+                  : draggedQuestionId;
+
+              handleReorderQuestions(parsedId, draggedQuestionType, insertIndex);
+            }
+          }}
+        >
+          <button
+            type='button'
+            className='question-drag-handle'
+            aria-label='Drag to reorder question'
+          >
             <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-              <path d='M5.83333 3.33333H3.33333V5.83333H5.83333V3.33333ZM5.83333 8.33333H3.33333V10.8333H5.83333V8.33333ZM5.83333 13.3333H3.33333V15.8333H5.83333V13.3333ZM10.8333 3.33333H8.33333V5.83333H10.8333V3.33333ZM10.8333 8.33333H8.33333V10.8333H10.8333V8.33333ZM10.8333 13.3333H8.33333V15.8333H10.8333V13.3333ZM15.8333 3.33333H13.3333V5.83333H15.8333V3.33333ZM15.8333 8.33333H13.3333V10.8333H15.8333V8.33333ZM15.8333 13.3333H13.3333V15.8333H15.8333V13.3333Z' fill='#A4A7AE'/>
+              <path
+                d='M5.83333 3.33333H3.33333V5.83333H5.83333V3.33333ZM5.83333 8.33333H3.33333V10.8333H5.83333V8.33333ZM5.83333 13.3333H3.33333V15.8333H5.83333V13.3333ZM10.8333 3.33333H8.33333V5.83333H10.8333V3.33333ZM10.8333 8.33333H8.33333V10.8333H10.8333V8.33333ZM10.8333 13.3333H8.33333V15.8333H10.8333V13.3333ZM15.8333 3.33333H13.3333V5.83333H15.8333V3.33333ZM15.8333 8.33333H13.3333V10.8333H15.8333V8.33333ZM15.8333 13.3333H13.3333V15.8333H15.8333V13.3333Z'
+                fill='#A4A7AE'
+              />
             </svg>
           </button>
           <div className='question-field'>
@@ -810,14 +1397,22 @@ export default function PreScreeningQuestionsCard({
                   className='question-type-dropdown-trigger'
                   onClick={() =>
                     setShowTypeDropdown(
-                      showTypeDropdown === `suggested-${question.id}` ? null : `suggested-${question.id}`
+                      showTypeDropdown === `suggested-${question.id}`
+                        ? null
+                        : `suggested-${question.id}`
                     )
                   }
                 >
                   {getTypeIcon(currentType)}
                   <span>{getTypeLabel(currentType)}</span>
                   <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-                    <path d='M5 8.33333L10 13.3333L15 8.33333' stroke='currentColor' strokeWidth='1.67' strokeLinecap='round' strokeLinejoin='round'/>
+                    <path
+                      d='M5 8.33333L10 13.3333L15 8.33333'
+                      stroke='currentColor'
+                      strokeWidth='1.67'
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                    />
                   </svg>
                 </button>
                 {showTypeDropdown === `suggested-${question.id}` && (
@@ -830,14 +1425,29 @@ export default function PreScreeningQuestionsCard({
                           currentType === type.value ? 'selected' : ''
                         }`}
                         onClick={() =>
-                          handleChangeQuestionType(question.id, type.value as QuestionType)
+                          handleChangeQuestionType(
+                            question.id,
+                            type.value as QuestionType
+                          )
                         }
                       >
                         {getTypeIcon(type.value as QuestionType)}
                         <span>{type.label}</span>
                         {currentType === type.value && (
-                          <svg width='16' height='16' viewBox='0 0 16 16' fill='none' className='checkmark'>
-                            <path d='M13.3333 4L6 11.3333L2.66667 8' stroke='#5E5ADB' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'/>
+                          <svg
+                            width='16'
+                            height='16'
+                            viewBox='0 0 16 16'
+                            fill='none'
+                            className='checkmark'
+                          >
+                            <path
+                              d='M13.3333 4L6 11.3333L2.66667 8'
+                              stroke='#5E5ADB'
+                              strokeWidth='2'
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                            />
                           </svg>
                         )}
                       </button>
@@ -849,27 +1459,89 @@ export default function PreScreeningQuestionsCard({
             <div className='range-inputs'>
               <div className='range-input-group'>
                 <label className='range-label'>Minimum</label>
-                <div className='currency-input'>
-                  <span className='currency-symbol'>{question.currency}</span>
-                  <input type='number' className='range-input' value={minimum} onChange={(e) => handleUpdateRange(question.id, 'minimum', e.target.value)} placeholder='40,000'/>
-                  <select className='currency-select'><option>PHP</option></select>
+                <div className='salary-input-container'>
+                  <div className='salary-input-content'>
+                    <span className='currency-prefix'>
+                      {currencyOptions.find((c) => c.name === currency)
+                        ?.symbol || '₱'}
+                    </span>
+                    <input
+                      type='number'
+                      className='salary-input-field'
+                      value={minimum}
+                      onChange={(e) =>
+                        handleUpdateRange(question.id, 'minimum', e.target.value)
+                      }
+                      placeholder='0'
+                      min={0}
+                    />
+                  </div>
+                  <div className='currency-dropdown-wrapper'>
+                    <CustomDropdown
+                      onSelectSetting={(value: string) =>
+                        handleUpdateRange(question.id, 'currency', value)
+                      }
+                      screeningSetting={currency}
+                      settingList={currencyOptions}
+                      placeholder='PHP'
+                    />
+                  </div>
                 </div>
               </div>
               <div className='range-input-group'>
                 <label className='range-label'>Maximum</label>
-                <div className='currency-input'>
-                  <span className='currency-symbol'>{question.currency}</span>
-                  <input type='number' className='range-input' value={maximum} onChange={(e) => handleUpdateRange(question.id, 'maximum', e.target.value)} placeholder='60,000'/>
-                  <select className='currency-select'><option>PHP</option></select>
+                <div className='salary-input-container'>
+                  <div className='salary-input-content'>
+                    <span className='currency-prefix'>
+                      {currencyOptions.find((c) => c.name === currency)
+                        ?.symbol || '₱'}
+                    </span>
+                    <input
+                      type='number'
+                      className='salary-input-field'
+                      value={maximum}
+                      onChange={(e) =>
+                        handleUpdateRange(question.id, 'maximum', e.target.value)
+                      }
+                      placeholder='0'
+                      min={0}
+                    />
+                  </div>
+                  <div className='currency-dropdown-wrapper'>
+                    <CustomDropdown
+                      onSelectSetting={(value: string) =>
+                        handleUpdateRange(question.id, 'currency', value)
+                      }
+                      screeningSetting={currency}
+                      settingList={currencyOptions}
+                      placeholder='PHP'
+                    />
+                  </div>
                 </div>
               </div>
             </div>
             <div className='question-actions'>
               <div className='question-divider'></div>
-              <button type='button' className='delete-question-button' onClick={() => handleDeleteQuestion(question.id)}>
+              <button
+                type='button'
+                className='delete-question-button'
+                onClick={() => handleDeleteQuestion(question.id)}
+              >
                 <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
-                  <path d='M2 4H14M12.6667 4V13.3333C12.6667 14.0667 12.0667 14.6667 11.3333 14.6667H4.66667C3.93333 14.6667 3.33333 14.0667 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93333 5.93333 1.33333 6.66667 1.33333H9.33333C10.0667 1.33333 10.6667 1.93333 10.6667 2.66667V4' stroke='currentColor' strokeWidth='1.33' strokeLinecap='round' strokeLinejoin='round'/>
-                  <path d='M6.66667 7.33333V11.3333M9.33333 7.33333V11.3333' stroke='currentColor' strokeWidth='1.33' strokeLinecap='round' strokeLinejoin='round'/>
+                  <path
+                    d='M2 4H14M12.6667 4V13.3333C12.6667 14.0667 12.0667 14.6667 11.3333 14.6667H4.66667C3.93333 14.6667 3.33333 14.0667 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 1.93333 5.93333 1.33333 6.66667 1.33333H9.33333C10.0667 1.33333 10.6667 1.93333 10.6667 2.66667V4'
+                    stroke='currentColor'
+                    strokeWidth='1.33'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
+                  <path
+                    d='M6.66667 7.33333V11.3333M9.33333 7.33333V11.3333'
+                    stroke='currentColor'
+                    strokeWidth='1.33'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  />
                 </svg>
                 <span>Delete Question</span>
               </button>
@@ -889,15 +1561,33 @@ export default function PreScreeningQuestionsCard({
       <div className='card-heading'>
         <div className='heading-wrapper'>
           <div className='heading-with-badge'>
-            <span className='heading-text'>2. Pre-Screening Questions (optional)</span>
+            <span className='heading-text'>
+              2. Pre-Screening Questions (optional)
+            </span>
             <div className='question-count-badge'>
               <span>{totalQuestionsCount}</span>
             </div>
           </div>
-          <button type='button' className='add-custom-button' onClick={handleAddCustomQuestion}>
+          <button
+            type='button'
+            className='add-custom-button'
+            onClick={handleAddCustomQuestion}
+          >
             <svg width='20' height='20' viewBox='0 0 20 20' fill='none'>
-              <path d='M10 4.16667V15.8333' stroke='#FFFFFF' strokeWidth='1.67' strokeLinecap='round' strokeLinejoin='round'/>
-              <path d='M4.16667 10H15.8333' stroke='#FFFFFF' strokeWidth='1.67' strokeLinecap='round' strokeLinejoin='round'/>
+              <path
+                d='M10 4.16667V15.8333'
+                stroke='#FFFFFF'
+                strokeWidth='1.67'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              />
+              <path
+                d='M4.16667 10H15.8333'
+                stroke='#FFFFFF'
+                strokeWidth='1.67'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              />
             </svg>
             <span>Add custom</span>
           </button>
@@ -908,79 +1598,65 @@ export default function PreScreeningQuestionsCard({
           {(addedQuestions.size > 0 || customQuestions.length > 0) && (
             <>
               <div className='added-questions-list'>
-                {suggestedQuestions.filter((q) => addedQuestions.has(q.id)).map((question) => (
-                  <div key={question.id}>{renderSuggestedQuestionField(question)}</div>
-                ))}
-                {customQuestions.map((question) => renderCustomQuestionField(question))}
+                {allQuestionsOrder.map((item, index) => {
+                  if (item.type === 'suggested') {
+                    const question = suggestedQuestions.find(
+                      (q) => q.id === item.id
+                    );
+                    return question ? (
+                      <div key={`suggested-${item.id}`}>
+                        {renderSuggestedQuestionField(question, index)}
+                      </div>
+                    ) : null;
+                  } else {
+                    const question = customQuestions.find(
+                      (q) => q.id === item.id
+                    );
+                    return question
+                      ? renderCustomQuestionField(question, index)
+                      : null;
+                  }
+                })}
               </div>
 
-              <div className='category-question-count' style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', marginTop: '16px', marginBottom: '24px' }}>
-                <span style={{ fontSize: '14px', color: '#414651', fontWeight: 500 }}># of questions to ask</span>
-                <input
-                  type='number'
-                  value={questionCountToAsk !== null ? questionCountToAsk : ''}
-                  max={totalQuestionsCount}
-                  min={0}
-                  style={{
-                    maxWidth: '60px',
-                    height: '40px',
-                    padding: '8px 12px',
-                    border: '1px solid #D5D7DA',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    textAlign: 'center',
-                  }}
-                  onChange={(e) => {
-                    let value = parseInt(e.target.value);
-
-                    if (isNaN(value)) {
-                      value = null;
-                    }
-
-                    if (value > totalQuestionsCount) {
-                      value = totalQuestionsCount;
-                    }
-
-                    e.target.value = value === null ? '' : value.toString();
-                    setQuestionCountToAsk(value);
-                  }}
-                  onKeyDown={(e) => {
-                    if (
-                      !/[0-9]/.test(e.key) &&
-                      ![
-                        'Backspace',
-                        'Delete',
-                        'ArrowLeft',
-                        'ArrowRight',
-                      ].includes(e.key)
-                    ) {
-                      e.preventDefault();
-                    }
-                  }}
-                  placeholder={totalQuestionsCount.toString()}
-                />
-              </div>
-
-              <div style={{ margin: '0 0 24px 0', borderBottom: '1px solid #EAECF5' }}></div>
+              <div
+                style={{
+                  margin: '24px 0',
+                  borderBottom: '1px solid #EAECF5',
+                }}
+              ></div>
             </>
           )}
 
           <div className='suggested-questions-section'>
-            <div className='suggested-questions-heading'>Suggested Pre-screening Questions:</div>
+            <div className='suggested-questions-heading'>
+              Suggested Pre-screening Questions:
+            </div>
             <div className='suggested-questions-list'>
               {suggestedQuestions.map((question) => {
                 const isAdded = addedQuestions.has(question.id);
                 return (
                   <div key={question.id} className='suggested-question-item'>
                     <div className='question-content'>
-                      <div className='question-title' style={{ color: isAdded ? '#D5D7DA' : undefined }}>
+                      <div
+                        className='question-title'
+                        style={{ color: isAdded ? '#D5D7DA' : undefined }}
+                      >
                         {question.title}
                       </div>
-                      <div className='question-text' style={{ color: isAdded ? '#D5D7DA' : undefined }}>
+                      <div
+                        className='question-text'
+                        style={{ color: isAdded ? '#D5D7DA' : undefined }}
+                      >
                         {question.question}
                       </div>
                     </div>
-                    <button type='button' className='add-question-button' onClick={() => handleAddQuestion(question.id)} disabled={isAdded}>
+                    <button
+                      type='button'
+                      className='add-question-button'
+                      onClick={() => handleAddQuestion(question.id)}
+                      disabled={isAdded}
+                    >
                       <span>{isAdded ? 'Added' : 'Add'}</span>
                     </button>
                   </div>

@@ -258,7 +258,7 @@
     .salary-input-container {
       display: flex;
       flex-direction: row;
-      align-items: stretch;
+      align-items: center;
       width: 100%;
       background: #ffffff;
       border: 1px solid #e9eaeb;
@@ -944,12 +944,14 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  overflow: visible;
 
   .added-questions-list {
     display: flex;
     flex-direction: column;
     gap: 16px;
     width: 100%;
+    overflow: visible;
   }
 
   .empty-state {
@@ -1362,6 +1364,8 @@
   align-items: center;
   gap: 12px;
   width: 100%;
+  position: relative;
+  overflow: visible;
 
   .question-drag-handle {
     display: flex;
@@ -1400,7 +1404,7 @@
     width: 100%;
     border: 1px solid #e9eaeb;
     border-radius: 8px;
-    overflow: hidden;
+    overflow: visible;
 
     .question-header {
       display: flex;
@@ -1657,12 +1661,20 @@
       gap: 16px;
       padding: 12px 16px;
       width: 100%;
+      position: relative;
+      z-index: 1;
 
       .range-input-group {
         flex: 1;
         display: flex;
         flex-direction: column;
         gap: 8px;
+        position: relative;
+        z-index: 1;
+
+        &:has(.custom-dropdown.open) {
+          z-index: 1000;
+        }
 
         .range-label {
           font-family: 'Satoshi', sans-serif;
@@ -1670,6 +1682,15 @@
           font-weight: 500;
           line-height: 1.4285714285714286em;
           color: #414651;
+        }
+
+        .salary-input-container {
+          position: relative;
+          z-index: 1;
+
+          &:has(.custom-dropdown.open) {
+            z-index: 1000;
+          }
         }
 
         .currency-input {
@@ -1940,5 +1961,113 @@
 
   .preview-textarea {
     min-height: 100px;
+  }
+}
+
+.salary-input-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e9eaeb;
+  border-radius: 8px;
+  box-shadow: 0px 1px 2px 0px rgba(10, 13, 18, 0.05);
+
+  .salary-input-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 0px 10px 14px;
+    flex: 1;
+    min-width: 0;
+
+    .currency-prefix {
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.5em;
+      color: #717680;
+      flex-shrink: 0;
+    }
+
+    .salary-input-field {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: 'Satoshi', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.5em;
+      color: #181d27;
+      min-width: 0;
+      padding: 0;
+      -moz-appearance: textfield;
+      appearance: textfield;
+
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      &::placeholder {
+        color: #717680;
+      }
+    }
+  }
+
+  .currency-dropdown-wrapper {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+
+    .custom-dropdown {
+      width: 100%;
+      height: 100%;
+
+      button {
+        border: none !important;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 10px 14px;
+        height: 100%;
+        min-width: 80px;
+        background: transparent;
+        gap: 4px;
+        justify-content: space-between;
+        cursor: pointer;
+        outline: none;
+
+        &:focus,
+        &:active,
+        &:focus-visible {
+          outline: none;
+          box-shadow: none;
+        }
+
+        > div {
+          gap: 4px;
+          display: flex;
+          align-items: center;
+        }
+
+        span {
+          font-family: 'Satoshi', sans-serif;
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 1.5em;
+          color: #181d27;
+        }
+
+        svg {
+          flex-shrink: 0;
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
   }
 }
