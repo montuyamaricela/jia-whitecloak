@@ -36,8 +36,7 @@ export async function GET(req: Request) {
         if (status && status !== "All Statuses") {
             const statusMap = {
                 "Published": "active",
-                "Unpublished": "inactive",
-                "Draft": "draft"
+                "Unpublished": "inactive"
             };
             filter.status = statusMap[status] || "active";
         }
@@ -121,7 +120,6 @@ export async function GET(req: Request) {
             { $limit: limit },
             {
                 $project: {
-                    questions: 0,
                     jobTitle: 1,
                     status: 1,
                     createdAt: 1,
@@ -130,7 +128,6 @@ export async function GET(req: Request) {
                     orgID: 1,
                     currentStep: 1,
                     completedSteps: 1,
-                    isDraft: 1,
                     interviewsInProgress: 1,
                     dropped: 1,
                     hired: 1

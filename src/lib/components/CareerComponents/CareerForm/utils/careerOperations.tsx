@@ -26,7 +26,12 @@ interface CareerData {
   employmentType: string;
   secretPrompt: string;
   preScreeningQuestions: any[];
+  interviewScreeningSetting?: string;
+  interviewSecretPrompt?: string;
+  teamMembers?: any[];
   orgID?: string;
+  currentStep?: number;
+  completedSteps?: number[];
 }
 
 interface SaveCareerParams {

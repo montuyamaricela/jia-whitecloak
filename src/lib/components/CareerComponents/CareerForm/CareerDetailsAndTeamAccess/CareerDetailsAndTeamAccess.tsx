@@ -140,7 +140,6 @@ export default function CareerDetailsAndTeamAccess({
           onAddMember={onAddMember}
           onRemoveMember={onRemoveMember}
           onUpdateRole={onUpdateRole}
-          currentUser={currentUser}
         />
       </div>
     </div>

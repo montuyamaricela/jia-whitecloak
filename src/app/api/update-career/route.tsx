@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     const { db } = await connectMongoDB();
 
-    if (status && status !== "draft") {
+    if (status && status !== "inactive") {
       const { jobTitle, description, questions, location, workSetup } = requestData;
       if (!jobTitle || !description || !questions || !location || !workSetup) {
         return NextResponse.json(
@@ -36,7 +36,6 @@ export async function POST(request: Request) {
       ...dataUpdates,
       updatedAt: new Date(),
       lastModified: new Date(),
-      isDraft: status === "draft",
     };
 
     await db
@@ -97,13 +96,13 @@ export async function PATCH(request: Request) {
     }
 
     return NextResponse.json({
-      message: "Draft updated successfully",
+      message: "Career updated successfully",
       updated: true,
     });
   } catch (error) {
-    console.error("Error updating draft:", error);
+    console.error("Error updating career:", error);
     return NextResponse.json(
-      { error: "Failed to update draft" },
+      { error: "Failed to update career" },
       { status: 500 }
     );
   }

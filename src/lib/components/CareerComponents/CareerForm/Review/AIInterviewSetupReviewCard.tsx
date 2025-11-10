@@ -6,6 +6,7 @@ import ReviewCard from './ReviewCard';
 export default function AIInterviewSetupReviewCard({
   isExpanded,
   onToggle,
+  onEdit,
   interviewScreeningSetting,
   requireVideo,
   interviewSecretPrompt,
@@ -13,6 +14,7 @@ export default function AIInterviewSetupReviewCard({
 }: {
   isExpanded: boolean;
   onToggle: () => void;
+  onEdit?: () => void;
   interviewScreeningSetting?: string;
   requireVideo?: boolean;
   interviewSecretPrompt?: string;
@@ -34,6 +36,7 @@ export default function AIInterviewSetupReviewCard({
       title='AI Interview Setup'
       isExpanded={isExpanded}
       onToggle={onToggle}
+      onEdit={onEdit}
     >
       <div className='review-section-container'>
         <div className='review-row-horizontal-group'>

@@ -27,10 +27,16 @@ export default function CareerForm({
   career,
   formType,
   setShowEditModal,
+  scrollToTeamAccess = false,
+  onScrollComplete,
+  initialStep,
 }: {
   career?: any;
   formType: string;
   setShowEditModal?: (show: boolean) => void;
+  scrollToTeamAccess?: boolean;
+  onScrollComplete?: () => void;
+  initialStep?: number;
 }) {
   const { user, orgID } = useAppContext();
 
@@ -59,7 +65,7 @@ export default function CareerForm({
     },
   });
 
-  const formState = useCareerFormState(career, setValue, trigger);
+  const formState = useCareerFormState(career, setValue, trigger, initialStep);
 
   useEffect(() => {
     register('jobTitle', {
@@ -335,10 +341,28 @@ export default function CareerForm({
     employmentType,
     secretPrompt,
     preScreeningQuestions,
+    interviewScreeningSetting,
+    interviewSecretPrompt,
+    teamMembers: members,
     orgID,
+    currentStep,
+    completedSteps: Array.from({ length: currentStep }, (_, i) => i),
   });
 
   const updateCareer = async (status: string) => {
+    // Only validate when publishing (status: 'active')
+    if (status === 'active') {
+      if (
+        !salaryNegotiable &&
+        Number(minimumSalary) &&
+        Number(maximumSalary) &&
+        Number(minimumSalary) > Number(maximumSalary)
+      ) {
+        errorToast('Minimum salary cannot be greater than maximum salary', 1300);
+        return;
+      }
+    }
+
     await saveCareerOperation({
       actionType: 'update',
       shouldRedirect: true,
@@ -350,17 +374,28 @@ export default function CareerForm({
   };
 
   const confirmSaveCareer = (status: string) => {
-    if (
-      !salaryNegotiable &&
-      Number(minimumSalary) &&
-      Number(maximumSalary) &&
-      Number(minimumSalary) > Number(maximumSalary)
-    ) {
-      errorToast('Minimum salary cannot be greater than maximum salary', 1300);
-      return;
+    // Only validate when publishing (status: 'active')
+    if (status === 'active') {
+      if (
+        !salaryNegotiable &&
+        Number(minimumSalary) &&
+        Number(maximumSalary) &&
+        Number(minimumSalary) > Number(maximumSalary)
+      ) {
+        errorToast('Minimum salary cannot be greater than maximum salary', 1300);
+        return;
+      }
     }
 
     setShowSaveModal(status);
+  };
+
+  const handlePublish = async () => {
+    if (formType === 'add') {
+      confirmSaveCareer('active');
+    } else {
+      updateCareer('active');
+    }
   };
 
   const saveCareer = async (status: string) => {
@@ -436,6 +471,28 @@ export default function CareerForm({
     setValue('employmentType', employmentType);
     setValue('country', country);
   }, [employmentType, country, setValue]);
+
+  useEffect(() => {
+    if (scrollToTeamAccess) {
+      setCurrentStep(0);
+
+      const scrollToElement = () => {
+        const teamAccessElement = document.getElementById('team-access-card');
+        if (teamAccessElement) {
+          teamAccessElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          if (onScrollComplete) {
+            onScrollComplete();
+          }
+        }
+      };
+
+      const timer = setTimeout(scrollToElement, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [scrollToTeamAccess, onScrollComplete]);
 
   const handleStepClick = (stepIndex: number) => {
     segmentHandlers.handleStepClick(stepIndex, currentStep, setCurrentStep);
@@ -595,6 +652,7 @@ export default function CareerForm({
             interviewSecretPrompt={interviewSecretPrompt}
             interviewQuestions={questions}
             pipelineStages={[]}
+            onEditStep={(step) => setCurrentStep(step)}
           />
         );
       default:
@@ -609,6 +667,8 @@ export default function CareerForm({
         jobTitle={jobTitle}
         isFormValid={isFormValid()}
         isSavingCareer={isSavingCareer}
+        careerStatus={career?.status}
+        formType={formType}
         onSaveUnpublished={() => {
           if (formType === 'add') {
             confirmSaveCareer('inactive');
@@ -617,6 +677,7 @@ export default function CareerForm({
           }
         }}
         onSaveAndContinue={handleSaveAndContinue}
+        onPublish={handlePublish}
       />
 
       <SegmentedFormLayout

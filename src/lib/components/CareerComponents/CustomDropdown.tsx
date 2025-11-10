@@ -51,7 +51,7 @@ export default function CustomDropdown(props) {
     <div
       className='custom-dropdown'
       ref={dropdownRef}
-      style={{ position: 'relative', width: '100%', zIndex: 1 }}
+      style={{ position: 'relative', width: '100%', zIndex: 'inherit' }}
     >
       <button
         disabled={settingList.length === 0}
@@ -171,7 +171,7 @@ export default function CustomDropdown(props) {
             boxShadow:
               '0px 4px 6px -2px rgba(10, 13, 18, 0.03), 0px 12px 16px -4px rgba(10, 13, 18, 0.08)',
             padding: showSearch ? '0' : '8px',
-            zIndex: 9999,
+            zIndex: 10000, // Even higher to ensure it's above everything
             maxHeight: showSearch ? 'none' : '400px',
             overflowY: 'auto',
           }}

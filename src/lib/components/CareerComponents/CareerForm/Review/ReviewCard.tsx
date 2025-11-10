@@ -60,6 +60,7 @@ interface ReviewCardProps {
   title: string
   isExpanded: boolean
   onToggle: () => void
+  onEdit?: () => void
   children: ReactNode
 }
 
@@ -67,6 +68,7 @@ export default function ReviewCard({
   title,
   isExpanded,
   onToggle,
+  onEdit,
   children,
 }: ReviewCardProps) {
   return (
@@ -78,16 +80,18 @@ export default function ReviewCard({
             <span className='review-card-title'>{title}</span>
           </div>
         </div>
-        <button
-          type='button'
-          className='review-card-edit-button'
-          onClick={(e) => {
-            e.stopPropagation()
-            // TODO: Handle edit action
-          }}
-        >
-          <EditIcon />
-        </button>
+        {onEdit && (
+          <button
+            type='button'
+            className='review-card-edit-button'
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit()
+            }}
+          >
+            <EditIcon />
+          </button>
+        )}
       </div>
       {isExpanded && (
         <div className='review-card-content'>

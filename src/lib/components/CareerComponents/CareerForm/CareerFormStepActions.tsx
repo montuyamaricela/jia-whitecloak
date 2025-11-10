@@ -5,23 +5,34 @@ export default function CareerFormStepActions({
   jobTitle,
   isFormValid,
   isSavingCareer,
+  careerStatus,
+  formType,
   onSaveUnpublished,
   onSaveAndContinue,
+  onPublish,
 }: {
   currentStep: number;
   jobTitle: string;
   isFormValid: boolean;
   isSavingCareer: boolean;
+  careerStatus?: string;
+  formType?: string;
   onSaveUnpublished: () => void;
   onSaveAndContinue: () => void;
+  onPublish?: () => void;
 }) {
   const getTitle = () => {
-    if (currentStep === 0) {
+    if (formType === 'edit') {
+      return null;
+    }
+    if (formType === 'add' && currentStep === 0) {
       return 'Add new Career';
     }
     return (
       <>
-        <span style={{ color: '#717680' }}>[Draft]</span>{' '}
+        {careerStatus === 'inactive' && (
+          <><span style={{ color: '#717680' }}>[Unpublished]</span>{' '}</>
+        )}
         {jobTitle || 'Untitled Career'}
       </>
     );
@@ -33,15 +44,17 @@ export default function CareerFormStepActions({
         marginBottom: '35px',
         display: 'flex',
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: formType === 'edit' ? 'flex-end' : 'space-between',
         alignItems: 'center',
         gap: '10px',
         width: '100%',
       }}
     >
-      <h1 style={{ fontSize: '24px', fontWeight: 550, color: '#111827' }}>
-        {getTitle()}
-      </h1>
+      {formType !== 'edit' && (
+        <h1 style={{ fontSize: '24px', fontWeight: 550, color: '#111827' }}>
+          {getTitle()}
+        </h1>
+      )}
       <div
         style={{
           display: 'flex',
@@ -99,7 +112,7 @@ export default function CareerFormStepActions({
           gap: '8px',
           transition: 'opacity 0.2s',
         }}
-        onClick={onSaveAndContinue}
+        onClick={currentStep === 4 && onPublish ? onPublish : onSaveAndContinue}
         onMouseEnter={(e) => {
           if (isSavingCareer) return;
           e.currentTarget.style.opacity = '0.8';
@@ -108,7 +121,7 @@ export default function CareerFormStepActions({
           e.currentTarget.style.opacity = '1';
         }}
       >
-        <span>Save and Continue</span>
+        <span>{currentStep === 4 ? 'Publish' : 'Save and Continue'}</span>
         <svg
           width='20'
           height='20'

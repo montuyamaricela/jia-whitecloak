@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import FormField from '@/lib/components/ui/custom/FormField';
 import CustomDropdown from '@/lib/components/CareerComponents/CustomDropdown';
 import '@/lib/styles/career-details-styles.scss';
 
@@ -38,19 +37,12 @@ export default function TeamAccessCard({
   onAddMember,
   onRemoveMember,
   onUpdateRole,
-  currentUser,
 }: {
   members?: TeamMember[];
   availableMembers?: TeamMember[];
   onAddMember?: (memberId: string) => void;
   onRemoveMember?: (memberId: string) => void;
   onUpdateRole?: (memberId: string, role: string) => void;
-  currentUser?: {
-    id: string;
-    name: string;
-    email: string;
-    avatar?: string;
-  };
 }) {
   const [selectedMember, setSelectedMember] = useState('');
 
@@ -72,7 +64,7 @@ export default function TeamAccessCard({
   }));
 
   return (
-    <div className='career-card'>
+    <div className='career-card' id='team-access-card'>
       <div className='card-heading'>
         <div className='heading-wrapper'>
           <span className='heading-text'>5. Team Access</span>
@@ -88,7 +80,10 @@ export default function TeamAccessCard({
               </div>
             </div>
             {memberOptions.length > 0 && (
-              <div className='member-dropdown'>
+              <div
+                className='member-dropdown'
+                style={{ position: 'relative', zIndex: 2000 }}
+              >
                 <CustomDropdown
                   onSelectSetting={(selectedName) => {
                     const option = memberOptions.find(
@@ -153,7 +148,10 @@ export default function TeamAccessCard({
                       </div>
                     </div>
                     <div className='member-actions'>
-                      <div className='role-dropdown'>
+                      <div
+                        className='role-dropdown'
+                        style={{ position: 'relative', zIndex: 1000 }}
+                      >
                         <CustomDropdown
                           onSelectSetting={(role) =>
                             handleRoleChange(member.id, role)

@@ -5,6 +5,7 @@ import ReviewCard from './ReviewCard';
 export default function CareerDetailsAndTeamAccessReviewCard({
   isExpanded,
   onToggle,
+  onEdit,
   jobTitle,
   employmentType,
   workSetup,
@@ -16,9 +17,11 @@ export default function CareerDetailsAndTeamAccessReviewCard({
   salaryNegotiable,
   description,
   members = [],
+  hideTeamAccess = false,
 }: {
   isExpanded: boolean;
   onToggle: () => void;
+  onEdit?: () => void;
   jobTitle?: string;
   employmentType?: string;
   workSetup?: string;
@@ -30,12 +33,14 @@ export default function CareerDetailsAndTeamAccessReviewCard({
   salaryNegotiable?: boolean;
   description?: string;
   members?: any[];
+  hideTeamAccess?: boolean;
 }) {
   return (
     <ReviewCard
-      title='Career Details & Team Access'
+      title={hideTeamAccess ? 'Career Details' : 'Career Details & Team Access'}
       isExpanded={isExpanded}
       onToggle={onToggle}
+      onEdit={onEdit}
     >
       <div className='review-section-container'>
         <div className='review-row review-row-single'>
@@ -112,44 +117,50 @@ export default function CareerDetailsAndTeamAccessReviewCard({
           />
         </div>
 
-        <div className='review-divider'></div>
+        {!hideTeamAccess && (
+          <>
+            <div className='review-divider'></div>
 
-        <div className='review-row review-row-single'>
-          <div className='review-label'>Team Access</div>
-          <div className='review-team-members'>
-            {members.length > 0 ? (
-              members.map((member) => (
-                <div key={member.id} className='review-team-member'>
-                  <div className='review-team-member-info'>
-                    {member.avatar ? (
-                      <img
-                        src={member.avatar}
-                        alt={member.name}
-                        className='review-avatar'
-                      />
-                    ) : (
-                      <div className='review-avatar review-avatar-placeholder'>
-                        {member.name?.charAt(0).toUpperCase() || 'U'}
+            <div className='review-row review-row-single'>
+              <div className='review-label'>Team Access</div>
+              <div className='review-team-members'>
+                {members.length > 0 ? (
+                  members.map((member) => (
+                    <div key={member.id} className='review-team-member'>
+                      <div className='review-team-member-info'>
+                        {member.avatar ? (
+                          <img
+                            src={member.avatar}
+                            alt={member.name}
+                            className='review-avatar'
+                          />
+                        ) : (
+                          <div className='review-avatar review-avatar-placeholder'>
+                            {member.name?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                        )}
+                        <div className='review-team-member-details'>
+                          <div className='review-team-member-name'>
+                            {member.name}
+                            {member.isOwner && ' (You)'}
+                          </div>
+                          <div className='review-team-member-email'>
+                            {member.email}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    <div className='review-team-member-details'>
-                      <div className='review-team-member-name'>
-                        {member.name}
-                        {member.isOwner && ' (You)'}
-                      </div>
-                      <div className='review-team-member-email'>
-                        {member.email}
+                      <div className='review-team-member-role'>
+                        {member.role}
                       </div>
                     </div>
-                  </div>
-                  <div className='review-team-member-role'>{member.role}</div>
-                </div>
-              ))
-            ) : (
-              <div className='review-value'>—</div>
-            )}
-          </div>
-        </div>
+                  ))
+                ) : (
+                  <div className='review-value'>—</div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </ReviewCard>
   );

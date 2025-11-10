@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server"
-import connectMongoDB from "@/lib/mongoDB/mongoDB"
+import { NextRequest, NextResponse } from 'next/server';
+import connectMongoDB from '@/lib/mongoDB/mongoDB';
 
 /**
  * Setup endpoint to bootstrap test accounts
@@ -8,113 +8,121 @@ import connectMongoDB from "@/lib/mongoDB/mongoDB"
  */
 export async function POST(request: NextRequest) {
   try {
-    const { email, name, image } = await request.json()
+    const { email, name, image } = await request.json();
 
     // Validate required fields
     if (!email || !name) {
       return NextResponse.json(
-        { error: "Email and name are required" },
+        { error: 'Email and name are required' },
         { status: 400 }
-      )
+      );
     }
 
-    const { db } = await connectMongoDB()
+    const { db } = await connectMongoDB();
 
     // 1. Create super admin account
-    const existingAdmin = await db.collection("admins").findOne({ email })
+    const existingAdmin = await db.collection('admins').findOne({ email });
     if (!existingAdmin) {
-      await db.collection("admins").insertOne({
+      await db.collection('admins').insertOne({
         email,
         name,
         image: image || `https://api.dicebear.com/9.x/shapes/svg?seed=${email}`,
         createdAt: new Date(),
         lastSeen: new Date(),
-      })
+      });
     }
 
     // 2. Get or create a test organization plan with unlimited jobs
-    let testPlan = await db.collection("organization-plans").findOne({ name: "Unlimited" })
+    let testPlan = await db
+      .collection('organization-plans')
+      .findOne({ name: 'Unlimited' });
     if (!testPlan) {
-      const planResult = await db.collection("organization-plans").insertOne({
-        name: "Unlimited",
+      const planResult = await db.collection('organization-plans').insertOne({
+        name: 'Unlimited',
         jobLimit: 9999,
         createdAt: new Date(),
-      })
-      testPlan = { _id: planResult.insertedId, name: "Unlimited", jobLimit: 9999 }
+      });
+      testPlan = {
+        _id: planResult.insertedId,
+        name: 'Unlimited',
+        jobLimit: 9999,
+      };
     }
 
     // 3. Create a test organization for the user
-    const testOrg = await db.collection("organizations").findOne({ 
+    const testOrg = await db.collection('organizations').findOne({
       creator: email,
-      name: "Test Organization" 
-    })
-    
+      name: 'Test Organization',
+    });
+
     if (!testOrg) {
-      const orgResult = await db.collection("organizations").insertOne({
-        name: "Test Organization",
-        description: "Test organization for evaluation",
-        status: "active",
-        tier: "enterprise",
+      const orgResult = await db.collection('organizations').insertOne({
+        name: 'Whitecloak test Organization',
+        description: 'Whitecloak test organization for evaluation',
+        status: 'active',
+        tier: 'enterprise',
         planId: testPlan._id.toString(),
         extraJobSlots: 0,
-        country: "Philippines",
-        province: "Metro Manila",
-        city: "Manila",
-        address: "Test Address",
+        country: 'Philippines',
+        province: 'Metro Manila',
+        city: 'Manila',
+        address: 'Test Address',
         createdAt: new Date(),
         updatedAt: new Date(),
-        image: "",
-        coverImage: "",
+        image: 'https://picsum.photos/200',
+        coverImage: 'https://picsum.photos/200',
         documents: [],
         creator: email,
         createdBy: {
           email,
           name,
-          image: image || `https://api.dicebear.com/9.x/shapes/svg?seed=${email}`,
+          image:
+            image || `https://api.dicebear.com/9.x/shapes/svg?seed=${email}`,
         },
-      })
+      });
 
       // 4. Add user as member of test org
-      const existingMember = await db.collection("members").findOne({ 
-        email, 
-        orgID: orgResult.insertedId.toString() 
-      })
-      
+      const existingMember = await db.collection('members').findOne({
+        email,
+        orgID: orgResult.insertedId.toString(),
+      });
+
       if (!existingMember) {
-        await db.collection("members").insertOne({
-          image: image || `https://api.dicebear.com/9.x/shapes/svg?seed=${email}`,
+        await db.collection('members').insertOne({
+          image:
+            image || `https://api.dicebear.com/9.x/shapes/svg?seed=${email}`,
           name,
           email,
           orgID: orgResult.insertedId.toString(),
-          role: "admin",
+          role: 'admin',
           careers: [],
           addedAt: new Date(),
           lastLogin: null,
-          status: "joined",
-        })
+          status: 'joined',
+        });
       }
 
       return NextResponse.json({
-        message: "Test accounts setup complete",
+        message: 'Test accounts setup complete',
         orgID: orgResult.insertedId.toString(),
         planId: testPlan._id.toString(),
         adminCreated: !existingAdmin,
         organizationCreated: true,
-      })
+      });
     }
 
     return NextResponse.json({
-      message: "Test organization already exists",
+      message: 'Test organization already exists',
       orgID: testOrg._id.toString(),
       planId: testPlan._id.toString(),
       adminCreated: !existingAdmin,
       organizationCreated: false,
-    })
+    });
   } catch (error) {
-    console.error("Error setting up test accounts:", error)
+    console.error('Error setting up test accounts:', error);
     return NextResponse.json(
-      { error: "Failed to setup test accounts" },
+      { error: 'Failed to setup test accounts' },
       { status: 500 }
-    )
+    );
   }
 }

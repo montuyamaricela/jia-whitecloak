@@ -22,6 +22,8 @@ interface Career {
   province?: string;
   location?: string;
   teamMembers?: any[];
+  currentStep?: number;
+  completedSteps?: number[];
 }
 
 const DEFAULT_QUESTIONS = [
@@ -60,8 +62,8 @@ const DEFAULT_QUESTIONS = [
 /**
  * Custom hook to manage all career form state
  */
-export const useCareerFormState = (career?: Career, setValue?: UseFormSetValue<any>, trigger?: any) => {
-  const [currentStep, setCurrentStep] = useState(0);
+export const useCareerFormState = (career?: Career, setValue?: UseFormSetValue<any>, trigger?: any, initialStep?: number) => {
+  const [currentStep, setCurrentStep] = useState(initialStep !== undefined ? initialStep : (career?.currentStep || 0));
   const [stepErrors, setStepErrors] = useState<Record<number, boolean>>({});
 
   const [jobTitle, setJobTitle] = useState(career?.jobTitle || '');

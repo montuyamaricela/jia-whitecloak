@@ -100,10 +100,20 @@ export default function PreScreeningQuestionsCard({
       questions.forEach((q) => {
         if (q.sourceType === 'suggested' && typeof q.sourceId === 'number') {
           newAddedQuestions.add(q.sourceId);
+
+          const isNoticePeriod = q.sourceId === 1;
+          const suggestedQuestion = suggestedQuestions.find(sq => sq.id === q.sourceId);
+
+          let customOptions = undefined;
+          if (!isNoticePeriod && suggestedQuestion && q.options) {
+            const baseOptions = suggestedQuestion.options || [];
+            customOptions = q.options.filter((opt: string) => !baseOptions.includes(opt));
+          }
+
           newQuestionValues[q.sourceId] = {
             type: q.type,
-            allOptions: q.allOptions,
-            options: q.options,
+            allOptions: isNoticePeriod ? q.allOptions || q.options : undefined,
+            options: isNoticePeriod ? undefined : customOptions,
             minimum: q.minimum,
             maximum: q.maximum,
             currency: q.currency,

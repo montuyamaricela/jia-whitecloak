@@ -31,6 +31,11 @@ export default function Review({
   interviewQuestions = [],
   // Pipeline Stages
   pipelineStages = [],
+  // Edit callback
+  onEdit,
+  onEditStep,
+  // Display options
+  hideTeamAccess = false,
 }: {
   jobTitle?: string
   employmentType?: string
@@ -51,6 +56,9 @@ export default function Review({
   interviewSecretPrompt?: string
   interviewQuestions?: any[]
   pipelineStages?: any[]
+  onEdit?: () => void
+  onEditStep?: (step: number) => void
+  hideTeamAccess?: boolean
 }) {
   const [expandedCard, setExpandedCard] = useState<string | null>(
     'career-details'
@@ -65,6 +73,7 @@ export default function Review({
       <CareerDetailsAndTeamAccessReviewCard
         isExpanded={expandedCard === 'career-details'}
         onToggle={() => handleToggle('career-details')}
+        onEdit={onEditStep ? () => onEditStep(0) : onEdit}
         jobTitle={jobTitle}
         employmentType={employmentType}
         workSetup={workSetup}
@@ -76,10 +85,12 @@ export default function Review({
         salaryNegotiable={salaryNegotiable}
         description={description}
         members={members}
+        hideTeamAccess={hideTeamAccess}
       />
       <CVReviewAndPreScreeningReviewCard
         isExpanded={expandedCard === 'cv-review'}
         onToggle={() => handleToggle('cv-review')}
+        onEdit={onEditStep ? () => onEditStep(1) : onEdit}
         screeningSetting={screeningSetting}
         secretPrompt={secretPrompt}
         preScreeningQuestions={preScreeningQuestions}
@@ -87,6 +98,7 @@ export default function Review({
       <AIInterviewSetupReviewCard
         isExpanded={expandedCard === 'ai-interview'}
         onToggle={() => handleToggle('ai-interview')}
+        onEdit={onEditStep ? () => onEditStep(2) : onEdit}
         interviewScreeningSetting={interviewScreeningSetting}
         requireVideo={requireVideo}
         interviewSecretPrompt={interviewSecretPrompt}
@@ -95,6 +107,7 @@ export default function Review({
       <PipelineStagesReviewCard
         isExpanded={expandedCard === 'pipeline-stages'}
         onToggle={() => handleToggle('pipeline-stages')}
+        onEdit={onEditStep ? () => onEditStep(3) : onEdit}
         pipelineStages={pipelineStages}
       />
     </div>

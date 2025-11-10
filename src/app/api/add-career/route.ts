@@ -24,23 +24,28 @@ export async function POST(request: Request) {
       country,
       province,
       employmentType,
-      
-      // for drafts
+      secretPrompt,
+      preScreeningQuestions,
+      interviewScreeningSetting,
+      interviewSecretPrompt,
+      teamMembers,
+
+      // for unpublished careers
       currentStep,
       completedSteps,
     } = await request.json();
 
     // Conditional validation based on status
-    if (status === "draft") {
-      // For drafts, only require job title (minimum data to create a draft)
+    if (status === "inactive") {
+      // For unpublished, only require job title (minimum data to save as unpublished)
       if (!jobTitle?.trim()) {
         return NextResponse.json(
-          { error: "Job title is required to create a draft" },
+          { error: "Job title is required to save as unpublished" },
           { status: 400 }
         );
       }
     } else {
-      // Full validation for active/inactive (published/unpublished)
+      // Full validation for active (published)
       if (!jobTitle || !description || !questions || !location || !workSetup) {
         return NextResponse.json(
           {
@@ -54,7 +59,7 @@ export async function POST(request: Request) {
 
     const { db } = await connectMongoDB();
 
-    // Only check job limits if publishing (not for drafts)
+    // Only check job limits if publishing (not for unpublished)
     if (status === "active") {
       const orgDetails = await db.collection("organizations").aggregate([
         {
@@ -111,6 +116,11 @@ export async function POST(request: Request) {
       createdBy,
       status: status || "active",
       screeningSetting,
+      secretPrompt,
+      preScreeningQuestions,
+      interviewScreeningSetting,
+      interviewSecretPrompt,
+      teamMembers,
       orgID,
       requireVideo,
       lastActivityAt: new Date(),
@@ -120,10 +130,9 @@ export async function POST(request: Request) {
       country,
       province,
       employmentType,
-      // Draft-specific fields
-      currentStep: currentStep || 1,
+      // Unpublished-specific fields
+      currentStep: currentStep || 0,
       completedSteps: completedSteps || [],
-      isDraft: status === "draft",
       lastModified: new Date(),
     };
 

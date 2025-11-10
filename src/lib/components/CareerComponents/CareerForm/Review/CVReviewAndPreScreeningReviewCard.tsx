@@ -6,12 +6,14 @@ import ReviewCard from './ReviewCard';
 export default function CVReviewAndPreScreeningReviewCard({
   isExpanded,
   onToggle,
+  onEdit,
   screeningSetting,
   secretPrompt,
   preScreeningQuestions = [],
 }: {
   isExpanded: boolean;
   onToggle: () => void;
+  onEdit?: () => void;
   screeningSetting?: string;
   secretPrompt?: string;
   preScreeningQuestions?: any[];
@@ -27,6 +29,7 @@ export default function CVReviewAndPreScreeningReviewCard({
       title='CV Review & Pre-Screening Questions'
       isExpanded={isExpanded}
       onToggle={onToggle}
+      onEdit={onEdit}
     >
       <div className='review-section-container'>
         <div className='review-row-horizontal-group'>

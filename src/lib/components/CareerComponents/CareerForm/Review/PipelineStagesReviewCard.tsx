@@ -5,10 +5,12 @@ import ReviewCard from './ReviewCard'
 export default function PipelineStagesReviewCard({
   isExpanded,
   onToggle,
+  onEdit,
   pipelineStages = [],
 }: {
   isExpanded: boolean
   onToggle: () => void
+  onEdit?: () => void
   pipelineStages?: any[]
 }) {
   return (
@@ -16,6 +18,7 @@ export default function PipelineStagesReviewCard({
       title='Pipeline Stages'
       isExpanded={isExpanded}
       onToggle={onToggle}
+      onEdit={onEdit}
     >
       <div className='review-section-container'>
         <div className='review-row'>

@@ -484,6 +484,8 @@
     .member-dropdown {
       width: 240px;
       flex-shrink: 0;
+      position: relative;
+      z-index: 2000; // Higher than role dropdowns
     }
   }
 
@@ -552,6 +554,8 @@
 
         .role-dropdown {
           width: 240px;
+          position: relative;
+          z-index: 1000; // Lower than add member dropdown
         }
 
         .remove-button {
