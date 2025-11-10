@@ -15,9 +15,9 @@ export default function CareerActionModal({ action, onAction }: { action: string
             color: "#181D27",
             iconColor: "#DC6803",
             iconBgColor: "#FEF0C7",
-            title: "Save without publishing",
-            subtext: "Are you sure you want to save this career without publishing it?",
-            buttonText: "Save",
+            title: "Save as Unpublished",
+            subtext: "Your progress will be saved and you can continue editing later. <br /> Unpublished careers are not visible to applicants.",
+            buttonText: "Save as Unpublished",
         }
     }
     return (

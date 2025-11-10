@@ -1,695 +1,1035 @@
-"use client";
-import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { useAppContext } from "@/lib/context/AppContext";
-import axios from "axios";
-import CareerStageColumn from "@/lib/components/CareerComponents/CareerStage";
-import JobDescription from "@/lib/components/CareerComponents/JobDescription";
-import HeaderBar from "@/lib/PageComponent/HeaderBar";
-import CandidateMenu from "@/lib/components/CareerComponents/CandidateMenu";
-import CandidateCV from "@/lib/components/CareerComponents/CandidateCV";
-import DroppedCandidates from "@/lib/components/CareerComponents/DroppedCandidates";
-import CareerApplicantsTable from "@/lib/components/DataTables/CareerApplicantsTable";
-import Swal from "sweetalert2";
-import CandidateHistory from "@/lib/components/CareerComponents/CandidateHistory";
-import { useCareerApplicants } from "@/lib/hooks/useCareerApplicants";
-import CareerStatus from "@/lib/components/CareerComponents/CareerStatus";
-import CandidateActionModal from "@/lib/components/CandidateComponents/CandidateActionModal";
-import { candidateActionToast, errorToast, getStage } from "@/lib/Utils";
-import { Tooltip } from "react-tooltip";
+'use client';
+import { useParams, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useAppContext } from '@/lib/context/AppContext';
+import axios from 'axios';
+import CareerStageColumn from '@/lib/components/CareerComponents/CareerStage';
+import JobDescription from '@/lib/components/CareerComponents/JobDescription';
+import CareerForm from '@/lib/components/CareerComponents/CareerForm/CareerForm';
+import Review from '@/lib/components/CareerComponents/CareerForm/Review/Review';
+import CareerLink from '@/lib/components/CareerComponents/CareerLink';
+import DirectInterviewLinkV2 from '@/lib/components/CareerComponents/DirectInterviewLinkV2';
+import HeaderBar from '@/lib/PageComponent/HeaderBar';
+import CandidateMenu from '@/lib/components/CareerComponents/CandidateMenu';
+import CandidateCV from '@/lib/components/CareerComponents/CandidateCV';
+import DroppedCandidates from '@/lib/components/CareerComponents/DroppedCandidates';
+import CareerApplicantsTable from '@/lib/components/DataTables/CareerApplicantsTable';
+import Swal from 'sweetalert2';
+import CandidateHistory from '@/lib/components/CareerComponents/CandidateHistory';
+import { useCareerApplicants } from '@/lib/hooks/useCareerApplicants';
+import CareerStatus from '@/lib/components/CareerComponents/CareerStatus';
+import CandidateActionModal from '@/lib/components/CandidateComponents/CandidateActionModal';
+import { candidateActionToast, errorToast, getStage } from '@/lib/Utils';
+import { Tooltip } from 'react-tooltip';
+
+const EditIcon = () => (
+  <svg
+    width='32'
+    height='32'
+    viewBox='0 0 32 32'
+    fill='none'
+    xmlns='http://www.w3.org/2000/svg'
+  >
+    <g filter='url(#filter0_d_1_14819)'>
+      <path
+        d='M2 15C2 7.26801 8.26801 1 16 1C23.732 1 30 7.26801 30 15C30 22.732 23.732 29 16 29C8.26801 29 2 22.732 2 15Z'
+        fill='white'
+      />
+      <path
+        d='M16 1.5C23.4558 1.5 29.5 7.54416 29.5 15C29.5 22.4558 23.4558 28.5 16 28.5C8.54416 28.5 2.5 22.4558 2.5 15C2.5 7.54416 8.54416 1.5 16 1.5Z'
+        stroke='#D5D7DA'
+      />
+      <g clipPath='url(#clip0_1_14819)'>
+        <path
+          d='M19.334 9C19.5091 8.8249 19.7169 8.68601 19.9457 8.59125C20.1745 8.49649 20.4197 8.44772 20.6673 8.44772C20.9149 8.44772 21.1601 8.49649 21.3889 8.59125C21.6177 8.68601 21.8256 8.8249 22.0007 9C22.1757 9.1751 22.3146 9.38297 22.4094 9.61174C22.5042 9.84051 22.5529 10.0857 22.5529 10.3333C22.5529 10.581 22.5042 10.8262 22.4094 11.0549C22.3146 11.2837 22.1757 11.4916 22.0007 11.6667L13.0007 20.6667L9.33398 21.6667L10.334 18L19.334 9Z'
+          stroke='#535862'
+          strokeWidth='1.67'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
+      </g>
+    </g>
+    <defs>
+      <filter
+        id='filter0_d_1_14819'
+        x='0'
+        y='0'
+        width='32'
+        height='32'
+        filterUnits='userSpaceOnUse'
+        colorInterpolationFilters='sRGB'
+      >
+        <feFlood floodOpacity='0' result='BackgroundImageFix' />
+        <feColorMatrix
+          in='SourceAlpha'
+          type='matrix'
+          values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'
+          result='hardAlpha'
+        />
+        <feOffset dy='1' />
+        <feGaussianBlur stdDeviation='1' />
+        <feColorMatrix
+          type='matrix'
+          values='0 0 0 0 0.0392157 0 0 0 0 0.0496732 0 0 0 0 0.0705882 0 0 0 0.05 0'
+        />
+        <feBlend
+          mode='normal'
+          in2='BackgroundImageFix'
+          result='effect1_dropShadow_1_14819'
+        />
+        <feBlend
+          mode='normal'
+          in='SourceGraphic'
+          in2='effect1_dropShadow_1_14819'
+          result='shape'
+        />
+      </filter>
+      <clipPath id='clip0_1_14819'>
+        <rect width='16' height='16' fill='white' transform='translate(8 7)' />
+      </clipPath>
+    </defs>
+  </svg>
+);
 
 export default function ManageCareerPage() {
-    const { slug } = useParams();
-    const searchParams = useSearchParams();
-    const tab = searchParams.get("tab");
-    const { orgID, user } = useAppContext();
-    const [career, setCareer] = useState<any>(null);
-    const { timelineStages, interviewsInProgress, dropped, hired, setAndSortCandidates } = useCareerApplicants({
-        "CV Review": {
-            candidates: [],
-            droppedCandidates: [],
-            color: "#6941C6",
-            nextStage: {
-                name: "Pending AI Interview",
-                step: "AI Interview",
-                status: "For Interview"
-            },
-            currentStage: {
-                name: "CV Review",
-                step: "CV Screening",
-                status: "For CV Screening"
-            }
-        },
-        "Pending AI Interview": {
-            candidates: [],
-            droppedCandidates: [],
-            // Orange
-            color: "#D97706",
-            nextStage: {
-                name: "AI Interview Review",
-                step: "AI Interview",
-                status: "For AI Interview Review"
-            },
-            currentStage: {
-                name: "Pending AI Interview",
-                step: "CV Screening",
-                status: "For AI Interview"
-            }
-        },
-        "AI Interview Review": {
-            candidates: [],
-            droppedCandidates: [],
-            // Light Blue
-            color: "#00CEC8",
-            nextStage: {
-                name: "For Human Interview",
-                step: "Human Interview",
-                status: "For Human Interview"
-            },
-            currentStage: {
-                name: "AI Interview Review",
-                step: "AI Interview",
-                status: "For AI Interview Review"
-            }
-        },
-        "For Human Interview": {
-            candidates: [],
-            droppedCandidates: [],
-            color: "#B42318",
-            nextStage: {
-                name: "Human Interview Review",
-                step: "Human Interview",
-                status: "For Human Interview Review"
-            },
-            currentStage: {
-                name: "For Human Interview",
-                step: "Human Interview",
-                status: "For Human Interview"
-            }
-        },
-        "Human Interview Review": {
-            candidates: [],
-            droppedCandidates: [],
-            // Violet
-            color: "#7E3AF2",
-            nextStage: {
-                name: "Pending Job Interview",
-                step: "Job Interview",
-                status: "For Interview"
-            },
-            currentStage: {
-                name: "Human Interview Review",
-                step: "Human Interview",
-                status: "For Human Interview Review"
-            }
-        },
-        "Pending Job Interview": {
-            candidates: [],
-            droppedCandidates: [],
-            // Blue
-            color: "#1849D5",
-            nextStage: {
-                name: "Job Offered",
-                step: "Job Offered",
-                status: "Accepted"
-            },
-            currentStage: {
-                name: "Pending Job Interview",
-                step: "Job Interview",
-                status: "For Interview"
-            }
-        },
-        "Job Offered": {
-            candidates: [],
-            droppedCandidates: [],
-            // Brown
-            color: "#854D0E",
-            nextStage: {
-                name: "Contract Signed",
-                step: "Contract Signed",
-                status: "Accepted"
-            },
-            currentStage: {
-                name: "Job Offered",
-                step: "Job Offered",
-                status: "Accepted"
-            }
-        },
-        "Contract Signed": {
-            candidates: [],
-            droppedCandidates: [],
-            // Light Green
-            color: "#80EF80",
-            nextStage: {
-                name: "Hired",
-                step: "Hired",
-                status: "Accepted"
-            },
-            currentStage: {
-                name: "Contract Signed",
-                step: "Contract Signed",
-                status: "Accepted"
-            }
-        },
-    });
-    const [activeTab, setActiveTab] = useState("application-timeline");
-    const [candidateMenuOpen, setCandidateMenuOpen] = useState<boolean>(false);
-    const [selectedCandidate, setSelectedCandidate] = useState<any>({});
-    const [candidateCVOpen, setCandidateCVOpen] = useState<boolean>(false);
-    const [selectedCandidateCV, setSelectedCandidateCV] = useState<any>({});
-    const [droppedCandidatesOpen, setDroppedCandidatesOpen] = useState<boolean>(false);
-    const [selectedDroppedCandidates, setSelectedDroppedCandidates] = useState<any>({});
-    const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState<any>({
-        _id: "",
-        jobTitle: "",
-        description: "",
-        questions: [],
-        status: "",
-        screeningSetting: "",
-        requireVideo: false,
-        directInterviewLink: "",
-    });
-    const [showCandidateHistory, setShowCandidateHistory] = useState(false);
-    const [selectedCandidateHistory, setSelectedCandidateHistory] = useState<any>({});
-    const [showCandidateActionModal, setShowCandidateActionModal] = useState("");
-    const draggedCandidateRef = useRef<boolean>(false);
-    
-    const tabs = [
-      {
-        label: "Application Timeline",
-        value: "application-timeline",
-        icon: "stream",
+  const { slug } = useParams();
+  const searchParams = useSearchParams();
+  const tab = searchParams.get('tab');
+  const { orgID, user } = useAppContext();
+  const [career, setCareer] = useState<any>(null);
+  const {
+    timelineStages,
+    interviewsInProgress,
+    dropped,
+    hired,
+    setAndSortCandidates,
+  } = useCareerApplicants({
+    'CV Review': {
+      candidates: [],
+      droppedCandidates: [],
+      color: '#6941C6',
+      nextStage: {
+        name: 'Pending AI Interview',
+        step: 'AI Interview',
+        status: 'For Interview',
       },
-      {
-        label: "All Applicants",
-        value: "all-applicants",
-        icon: "users",
+      currentStage: {
+        name: 'CV Review',
+        step: 'CV Screening',
+        status: 'For CV Screening',
       },
-      {
-        label: "Career Description",
-        value: "job-description",
-        icon: "suitcase",
+    },
+    'Pending AI Interview': {
+      candidates: [],
+      droppedCandidates: [],
+      // Orange
+      color: '#D97706',
+      nextStage: {
+        name: 'AI Interview Review',
+        step: 'AI Interview',
+        status: 'For AI Interview Review',
       },
-    ];
-    
-      useEffect(() => {
-        const fetchInterviews = async () => {
-          if (!career?.id) return;
+      currentStage: {
+        name: 'Pending AI Interview',
+        step: 'CV Screening',
+        status: 'For AI Interview',
+      },
+    },
+    'AI Interview Review': {
+      candidates: [],
+      droppedCandidates: [],
+      // Light Blue
+      color: '#00CEC8',
+      nextStage: {
+        name: 'For Human Interview',
+        step: 'Human Interview',
+        status: 'For Human Interview',
+      },
+      currentStage: {
+        name: 'AI Interview Review',
+        step: 'AI Interview',
+        status: 'For AI Interview Review',
+      },
+    },
+    'For Human Interview': {
+      candidates: [],
+      droppedCandidates: [],
+      color: '#B42318',
+      nextStage: {
+        name: 'Human Interview Review',
+        step: 'Human Interview',
+        status: 'For Human Interview Review',
+      },
+      currentStage: {
+        name: 'For Human Interview',
+        step: 'Human Interview',
+        status: 'For Human Interview',
+      },
+    },
+    'Human Interview Review': {
+      candidates: [],
+      droppedCandidates: [],
+      // Violet
+      color: '#7E3AF2',
+      nextStage: {
+        name: 'Pending Job Interview',
+        step: 'Job Interview',
+        status: 'For Interview',
+      },
+      currentStage: {
+        name: 'Human Interview Review',
+        step: 'Human Interview',
+        status: 'For Human Interview Review',
+      },
+    },
+    'Pending Job Interview': {
+      candidates: [],
+      droppedCandidates: [],
+      // Blue
+      color: '#1849D5',
+      nextStage: {
+        name: 'Job Offered',
+        step: 'Job Offered',
+        status: 'Accepted',
+      },
+      currentStage: {
+        name: 'Pending Job Interview',
+        step: 'Job Interview',
+        status: 'For Interview',
+      },
+    },
+    'Job Offered': {
+      candidates: [],
+      droppedCandidates: [],
+      // Brown
+      color: '#854D0E',
+      nextStage: {
+        name: 'Contract Signed',
+        step: 'Contract Signed',
+        status: 'Accepted',
+      },
+      currentStage: {
+        name: 'Job Offered',
+        step: 'Job Offered',
+        status: 'Accepted',
+      },
+    },
+    'Contract Signed': {
+      candidates: [],
+      droppedCandidates: [],
+      // Light Green
+      color: '#80EF80',
+      nextStage: {
+        name: 'Hired',
+        step: 'Hired',
+        status: 'Accepted',
+      },
+      currentStage: {
+        name: 'Contract Signed',
+        step: 'Contract Signed',
+        status: 'Accepted',
+      },
+    },
+  });
+  const [activeTab, setActiveTab] = useState('application-timeline');
+  const [candidateMenuOpen, setCandidateMenuOpen] = useState<boolean>(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<any>({});
+  const [candidateCVOpen, setCandidateCVOpen] = useState<boolean>(false);
+  const [selectedCandidateCV, setSelectedCandidateCV] = useState<any>({});
+  const [droppedCandidatesOpen, setDroppedCandidatesOpen] =
+    useState<boolean>(false);
+  const [selectedDroppedCandidates, setSelectedDroppedCandidates] =
+    useState<any>({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<any>({
+    _id: '',
+    jobTitle: '',
+    description: '',
+    questions: [],
+    status: '',
+    screeningSetting: '',
+    requireVideo: false,
+    directInterviewLink: '',
+  });
+  const [showCandidateHistory, setShowCandidateHistory] = useState(false);
+  const [selectedCandidateHistory, setSelectedCandidateHistory] = useState<any>(
+    {}
+  );
+  const [showCandidateActionModal, setShowCandidateActionModal] = useState('');
+  const draggedCandidateRef = useRef<boolean>(false);
+  const [scrollToTeamAccess, setScrollToTeamAccess] = useState(false);
+  const [editingStep, setEditingStep] = useState<number | undefined>(undefined);
 
-          const response = await axios.get(`/api/get-career-interviews?careerID=${career.id}`);
-          if (response.data.length > 0) {
-            let newTimelineStages = { ...timelineStages };
-            for (const interview of response.data) {
+  const tabs = [
+    {
+      label: 'Application Timeline',
+      value: 'application-timeline',
+      icon: 'stream',
+    },
+    {
+      label: 'All Applicants',
+      value: 'all-applicants',
+      icon: 'users',
+    },
+    {
+      label: 'Career Description',
+      value: 'job-description',
+      icon: 'suitcase',
+    },
+  ];
 
-                const isDropped = interview.applicationStatus === "Dropped" || interview.applicationStatus === "Cancelled";
-                if (interview.currentStep === "AI Interview" || !interview.currentStep || (interview.currentStep === "CV Screening" && interview.status === "For AI Interview")) {
-                    if (interview.status === "For Interview" || interview.status === "For AI Interview") {
-                        isDropped ? newTimelineStages["Pending AI Interview"].droppedCandidates.push(interview) : newTimelineStages["Pending AI Interview"].candidates.push(interview);
-                        continue;
-                    }
+  useEffect(() => {
+    const fetchInterviews = async () => {
+      if (!career?.id) return;
 
-                    isDropped ? newTimelineStages["AI Interview Review"].droppedCandidates.push(interview) : newTimelineStages["AI Interview Review"].candidates.push(interview);
-                    continue;
-                }
-                
-                if (interview.currentStep === "CV Screening") {
-                    isDropped ? newTimelineStages["CV Review"].droppedCandidates.push(interview) : newTimelineStages["CV Review"].candidates.push(interview);
-                    continue;
-                }
-
-                if (interview.currentStep === "Human Interview") {
-                    if (interview.status === "For Human Interview") {
-                        isDropped ? newTimelineStages["For Human Interview"].droppedCandidates.push(interview) : newTimelineStages["For Human Interview"].candidates.push(interview);
-                        continue;
-                    }
-                    if (interview.status === "For Human Interview Review") {
-                        isDropped ? newTimelineStages["Human Interview Review"].droppedCandidates.push(interview) : newTimelineStages["Human Interview Review"].candidates.push(interview);
-                        continue;
-                    }
-                }
-
-                if (interview.currentStep === "Job Interview") {
-                   isDropped ? newTimelineStages["Pending Job Interview"].droppedCandidates.push(interview) : newTimelineStages["Pending Job Interview"].candidates.push(interview);
-                   continue;
-                }
-
-                if (interview.currentStep === "Job Offered") {
-                    isDropped ? newTimelineStages["Job Offered"].droppedCandidates.push(interview) : newTimelineStages["Job Offered"].candidates.push(interview);
-                    continue;
-                }
-
-                if (interview.currentStep === "Contract Signed") {
-                    isDropped ? newTimelineStages["Contract Signed"].droppedCandidates.push(interview) : newTimelineStages["Contract Signed"].candidates.push(interview);
-                    continue;
-                }
+      const response = await axios.get(
+        `/api/get-career-interviews?careerID=${career.id}`
+      );
+      if (response.data.length > 0) {
+        let newTimelineStages = { ...timelineStages };
+        for (const interview of response.data) {
+          const isDropped =
+            interview.applicationStatus === 'Dropped' ||
+            interview.applicationStatus === 'Cancelled';
+          if (
+            interview.currentStep === 'AI Interview' ||
+            !interview.currentStep ||
+            (interview.currentStep === 'CV Screening' &&
+              interview.status === 'For AI Interview')
+          ) {
+            if (
+              interview.status === 'For Interview' ||
+              interview.status === 'For AI Interview'
+            ) {
+              isDropped
+                ? newTimelineStages[
+                    'Pending AI Interview'
+                  ].droppedCandidates.push(interview)
+                : newTimelineStages['Pending AI Interview'].candidates.push(
+                    interview
+                  );
+              continue;
             }
-    
-            setAndSortCandidates(newTimelineStages);
+
+            isDropped
+              ? newTimelineStages['AI Interview Review'].droppedCandidates.push(
+                  interview
+                )
+              : newTimelineStages['AI Interview Review'].candidates.push(
+                  interview
+                );
+            continue;
           }
-        };
-        
-        fetchInterviews();
-      }, [career?.id]);
 
-    useEffect(() => {
-        const fetchCareer = async () => {
-            if (!slug && !orgID) return;
-            try {
-                const response = await axios.post("/api/career-data", {
-                    id: slug,
-                    orgID,
-                  });
-                  
-                setCareer(response.data);
-                const deepCopy = JSON.parse(JSON.stringify(response.data?.questions ?? []));
-                setFormData({
-                    _id: response.data?._id || "",
-                    jobTitle: response.data?.jobTitle || "",
-                    description: response.data?.description || "",
-                    questions: deepCopy,
-                    status: response.data?.status || "",
-                    screeningSetting: response.data?.screeningSetting || "",
-                    requireVideo: response.data?.requireVideo === null || response.data?.requireVideo === undefined ? true : response.data?.requireVideo,
-                    directInterviewLink: response.data?.directInterviewLink || "",
-                    createdBy: response.data?.createdBy || {},
-                    minimumSalary: response.data?.minimumSalary || "",
-                    maximumSalary: response.data?.maximumSalary || "",
-                    province: response.data?.province || "",
-                    location: response.data?.location || "",
-                    salaryNegotiable: response.data?.salaryNegotiable || false,
-                    workSetup: response.data?.workSetup || "",
-                    workSetupRemarks: response.data?.workSetupRemarks || "",
-                    createdAt: response.data?.createdAt || "",
-                    updatedAt: response.data?.updatedAt || "",
-                    lastEditedBy: response.data?.lastEditedBy || {},
-                    employmentType: response.data?.employmentType || "Full-time",
-                    orgID: response.data?.orgID || "",
-                });
-                if (tab === "edit") {
-                    setActiveTab("job-description");
-                }
-            } catch (error) {
-                if (error.response.status === 404) {
-                    Swal.fire({
-                        title: "Career not found",
-                        text: "Redirecting back to careers page...",
-                        timer: 1500,
-                    }).then(() => {
-                        window.location.href = "/recruiter-dashboard/careers";
-                    });
-                    return;
-                }
-                Swal.fire({
-                    icon: "error",
-                    title: "Oops...",
-                    text: "Something went wrong! Please try again.",
-                });
+          if (interview.currentStep === 'CV Screening') {
+            isDropped
+              ? newTimelineStages['CV Review'].droppedCandidates.push(interview)
+              : newTimelineStages['CV Review'].candidates.push(interview);
+            continue;
+          }
+
+          if (interview.currentStep === 'Human Interview') {
+            if (interview.status === 'For Human Interview') {
+              isDropped
+                ? newTimelineStages[
+                    'For Human Interview'
+                  ].droppedCandidates.push(interview)
+                : newTimelineStages['For Human Interview'].candidates.push(
+                    interview
+                  );
+              continue;
             }
+            if (interview.status === 'For Human Interview Review') {
+              isDropped
+                ? newTimelineStages[
+                    'Human Interview Review'
+                  ].droppedCandidates.push(interview)
+                : newTimelineStages['Human Interview Review'].candidates.push(
+                    interview
+                  );
+              continue;
+            }
+          }
+
+          if (interview.currentStep === 'Job Interview') {
+            isDropped
+              ? newTimelineStages[
+                  'Pending Job Interview'
+                ].droppedCandidates.push(interview)
+              : newTimelineStages['Pending Job Interview'].candidates.push(
+                  interview
+                );
+            continue;
+          }
+
+          if (interview.currentStep === 'Job Offered') {
+            isDropped
+              ? newTimelineStages['Job Offered'].droppedCandidates.push(
+                  interview
+                )
+              : newTimelineStages['Job Offered'].candidates.push(interview);
+            continue;
+          }
+
+          if (interview.currentStep === 'Contract Signed') {
+            isDropped
+              ? newTimelineStages['Contract Signed'].droppedCandidates.push(
+                  interview
+                )
+              : newTimelineStages['Contract Signed'].candidates.push(interview);
+            continue;
+          }
         }
-        fetchCareer();
-    }, [slug, orgID, tab]);
 
-    const handleCandidateMenuOpen = (candidate: any) => {
-        setCandidateMenuOpen(prev => !prev);
-        setSelectedCandidate(candidate);
-    }
+        setAndSortCandidates(newTimelineStages);
+      }
+    };
 
-    const handleCandidateCVOpen = (candidate: any) => {
-        setCandidateCVOpen(prev => !prev);
-        setSelectedCandidateCV(candidate);
-    }
+    fetchInterviews();
+  }, [career?.id]);
 
-    const handleDroppedCandidatesOpen = (stage: string) => {
-        setDroppedCandidatesOpen(prev => !prev);
-        setSelectedDroppedCandidates({...timelineStages[stage], stage});
-    }
+  useEffect(() => {
+    setIsEditing(false);
+    setScrollToTeamAccess(false);
+    setEditingStep(undefined);
+  }, [activeTab]);
 
-    const handleCandidateHistoryOpen = (candidate: any) => {
-        setShowCandidateHistory(prev => !prev);
-        setSelectedCandidateHistory(candidate);
-    }
-
-    const handleCandidateAnalysisComplete = (updatedCandidate: any) => {
-        const updatedStages = {...timelineStages };
-        updatedStages[updatedCandidate.stage].candidates = updatedStages[updatedCandidate.stage].candidates.map((c: any) => c._id === updatedCandidate._id ? updatedCandidate : c);
-        setAndSortCandidates(updatedStages);
-    }
-
-    const handleCancelEdit = () => {
-        setFormData({
-            _id: career?._id || "",
-            jobTitle: career?.jobTitle || "",
-            description: career?.description || "",
-            questions: career?.questions || [],
-            status: career?.status || "",
-            screeningSetting: career?.screeningSetting || "",
-            requireVideo: career?.requireVideo === null || career?.requireVideo === undefined ? true : career?.requireVideo,
+  useEffect(() => {
+    const fetchCareer = async () => {
+      if (!slug && !orgID) return;
+      try {
+        const response = await axios.post('/api/career-data', {
+          id: slug,
+          orgID,
         });
-        setIsEditing(false);
-    }
 
-    const handleEndorseCandidate = (candidate: any) => {
-        setShowCandidateActionModal("endorse");
-        setSelectedCandidate(candidate);
-    }
+        setCareer(response.data);
+        const deepCopy = JSON.parse(
+          JSON.stringify(response.data?.questions ?? [])
+        );
+        setFormData({
+          _id: response.data?._id || '',
+          jobTitle: response.data?.jobTitle || '',
+          description: response.data?.description || '',
+          questions: deepCopy,
+          status: response.data?.status || '',
+          screeningSetting: response.data?.screeningSetting || '',
+          requireVideo:
+            response.data?.requireVideo === null ||
+            response.data?.requireVideo === undefined
+              ? true
+              : response.data?.requireVideo,
+          directInterviewLink: response.data?.directInterviewLink || '',
+          createdBy: response.data?.createdBy || {},
+          minimumSalary: response.data?.minimumSalary || '',
+          maximumSalary: response.data?.maximumSalary || '',
+          province: response.data?.province || '',
+          location: response.data?.location || '',
+          salaryNegotiable: response.data?.salaryNegotiable || false,
+          workSetup: response.data?.workSetup || '',
+          workSetupRemarks: response.data?.workSetupRemarks || '',
+          createdAt: response.data?.createdAt || '',
+          updatedAt: response.data?.updatedAt || '',
+          lastEditedBy: response.data?.lastEditedBy || {},
+          employmentType: response.data?.employmentType || 'Full-time',
+          orgID: response.data?.orgID || '',
+        });
+        if (tab === 'edit') {
+          setActiveTab('job-description');
+          setIsEditing(true);
+        }
+      } catch (error) {
+        if (error.response.status === 404) {
+          Swal.fire({
+            title: 'Career not found',
+            text: 'Redirecting back to careers page...',
+            timer: 1500,
+          }).then(() => {
+            window.location.href = '/recruiter-dashboard/careers';
+          });
+          return;
+        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Something went wrong! Please try again.',
+        });
+      }
+    };
+    fetchCareer();
+  }, [slug, orgID, tab]);
 
-    const handleDropCandidate = (candidate: any) => {
-        setShowCandidateActionModal("drop");
-        setSelectedCandidate(candidate);
+  const handleCandidateMenuOpen = (candidate: any) => {
+    setCandidateMenuOpen((prev) => !prev);
+    setSelectedCandidate(candidate);
+  };
+
+  const handleCandidateCVOpen = (candidate: any) => {
+    setCandidateCVOpen((prev) => !prev);
+    setSelectedCandidateCV(candidate);
+  };
+
+  const handleDroppedCandidatesOpen = (stage: string) => {
+    setDroppedCandidatesOpen((prev) => !prev);
+    setSelectedDroppedCandidates({ ...timelineStages[stage], stage });
+  };
+
+  const handleCandidateHistoryOpen = (candidate: any) => {
+    setShowCandidateHistory((prev) => !prev);
+    setSelectedCandidateHistory(candidate);
+  };
+
+  const handleCandidateAnalysisComplete = (updatedCandidate: any) => {
+    const updatedStages = { ...timelineStages };
+    updatedStages[updatedCandidate.stage].candidates = updatedStages[
+      updatedCandidate.stage
+    ].candidates.map((c: any) =>
+      c._id === updatedCandidate._id ? updatedCandidate : c
+    );
+    setAndSortCandidates(updatedStages);
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({
+      _id: career?._id || '',
+      jobTitle: career?.jobTitle || '',
+      description: career?.description || '',
+      questions: career?.questions || [],
+      status: career?.status || '',
+      screeningSetting: career?.screeningSetting || '',
+      requireVideo:
+        career?.requireVideo === null || career?.requireVideo === undefined
+          ? true
+          : career?.requireVideo,
+    });
+    setIsEditing(false);
+    setEditingStep(undefined);
+  };
+
+  const handleEndorseCandidate = (candidate: any) => {
+    setShowCandidateActionModal('endorse');
+    setSelectedCandidate(candidate);
+  };
+
+  const handleDropCandidate = (candidate: any) => {
+    setShowCandidateActionModal('drop');
+    setSelectedCandidate(candidate);
+  };
+
+  const dragEndorsedCandidate = (
+    candidateId: string,
+    fromStageKey: string,
+    toStageKey: string
+  ) => {
+    const candidateIndex = (
+      timelineStages?.[fromStageKey]?.candidates as any[]
+    ).findIndex((c) => c._id.toString() === candidateId);
+    const currentStage = timelineStages?.[toStageKey]?.currentStage;
+    const update = {
+      currentStep: currentStage.step,
+      status: currentStage.status,
+      updatedAt: Date.now(),
+      applicationMetadata: {
+        updatedAt: Date.now(),
+        updatedBy: {
+          image: user?.image,
+          name: user?.name,
+          email: user?.email,
+        },
+        action: 'Endorsed',
+      },
+    };
+    if (candidateIndex !== -1) {
+      const updatedStages = { ...timelineStages };
+      const candidate =
+        updatedStages?.[fromStageKey]?.candidates?.[candidateIndex];
+      // Remove and add to new stage
+
+      (updatedStages?.[toStageKey]?.candidates as any[]).push({
+        ...candidate,
+        ...update,
+      });
+      (updatedStages?.[fromStageKey]?.candidates as any[]).splice(
+        candidateIndex,
+        1
+      );
+      setAndSortCandidates(updatedStages);
+      draggedCandidateRef.current = true;
+      setShowCandidateActionModal('endorse');
+      setSelectedCandidate({
+        ...candidate,
+        stage: fromStageKey,
+        toStage: toStageKey,
+      });
     }
-    
-    const dragEndorsedCandidate = (candidateId: string, fromStageKey: string, toStageKey: string) => {
-        const candidateIndex = (timelineStages?.[fromStageKey]?.candidates as any[]).findIndex((c) => c._id.toString() === candidateId);
-        const currentStage = timelineStages?.[toStageKey]?.currentStage;
+  };
+
+  const handleReconsiderCandidate = (candidate: any) => {
+    setShowCandidateActionModal('reconsider');
+    setSelectedCandidate(candidate);
+  };
+
+  const handleRetakeInterview = async (candidate: any) => {
+    setShowCandidateActionModal('retake');
+    setSelectedCandidate(candidate);
+  };
+
+  const handleCandidateAction = async (action: string) => {
+    setShowCandidateActionModal('');
+    if (action === 'endorse') {
+      Swal.showLoading();
+      const { stage, toStage } = selectedCandidate;
+      const nextStage = toStage
+        ? timelineStages[toStage].currentStage
+        : timelineStages[stage].nextStage;
+      try {
         const update = {
-            currentStep: currentStage.step,
-            status: currentStage.status,
+          currentStep: nextStage.step,
+          status: nextStage.status,
+          updatedAt: Date.now(),
+          applicationMetadata: {
             updatedAt: Date.now(),
-            applicationMetadata: {
+            updatedBy: {
+              image: user?.image,
+              name: user?.name,
+              email: user?.email,
+            },
+            action: 'Endorsed',
+          },
+        };
+        await axios.post('/api/update-interview', {
+          uid: selectedCandidate._id,
+          data: update,
+          interviewTransaction: {
+            interviewUID: selectedCandidate._id,
+            fromStage: stage,
+            toStage: nextStage.name,
+            action: 'Endorsed',
+            updatedBy: {
+              image: user?.image,
+              name: user?.name,
+              email: user?.email,
+            },
+          },
+        });
+        if (!draggedCandidateRef.current) {
+          const updatedStages = { ...timelineStages };
+          updatedStages[stage].candidates = updatedStages[
+            stage
+          ].candidates.filter((c: any) => c._id !== selectedCandidate._id);
+          updatedStages[nextStage.name].candidates.push({
+            ...selectedCandidate,
+            ...update,
+          });
+          setAndSortCandidates(updatedStages);
+        }
+        candidateActionToast(
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginLeft: 8,
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#181D27' }}>
+                Candidate endorsed
+              </span>
+              <span
+                style={{
+                  fontSize: 14,
+                  color: '#717680',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                You have endorsed the candidate to the next stage.
+              </span>
+            </div>
+          </div>,
+          1300,
+          <i
+            className='la la-user-check'
+            style={{ color: '#039855', fontSize: 32 }}
+          ></i>
+        );
+      } catch (error) {
+        console.error('error', error);
+        errorToast('Failed to endorse candidate', 1300);
+      } finally {
+        Swal.close();
+      }
+    }
+
+    if (action === 'drop') {
+      Swal.showLoading();
+      try {
+        const { stage } = selectedCandidate;
+        const update = {
+          applicationStatus: 'Dropped',
+          updatedAt: Date.now(),
+          applicationMetadata: {
+            updatedAt: Date.now(),
+            updatedBy: {
+              image: user?.image,
+              name: user?.name,
+              email: user?.email,
+            },
+            action: 'Dropped',
+          },
+        };
+        await axios.post('/api/update-interview', {
+          uid: selectedCandidate._id,
+          data: update,
+          // For logging history
+          interviewTransaction: {
+            interviewUID: selectedCandidate._id,
+            fromStage: stage,
+            action: 'Dropped',
+            updatedBy: {
+              image: user?.image,
+              name: user?.name,
+              email: user?.email,
+            },
+          },
+        });
+        // Update state
+        if (timelineStages?.[stage]) {
+          const updatedStages = { ...timelineStages };
+          updatedStages[stage].droppedCandidates.push({
+            ...selectedCandidate,
+            ...update,
+          });
+          updatedStages[stage].candidates = updatedStages[
+            stage
+          ].candidates.filter((c: any) => c._id !== selectedCandidate._id);
+          setAndSortCandidates(updatedStages);
+        }
+        candidateActionToast(
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginLeft: 8,
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#181D27' }}>
+                Candidate dropped
+              </span>
+              <span
+                style={{
+                  fontSize: 14,
+                  color: '#717680',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                You have dropped the candidate from the application process.{' '}
+              </span>
+            </div>
+          </div>,
+          1300,
+          <i
+            className='la la-user-minus'
+            style={{ color: '#D92D20', fontSize: 32 }}
+          ></i>
+        );
+      } catch (error) {
+        console.error('error', error);
+        errorToast('Failed to drop candidate', 1300);
+      } finally {
+        Swal.close();
+      }
+    }
+
+    if (action === 'reconsider') {
+      Swal.showLoading();
+      try {
+        const { stage } = selectedCandidate;
+        const update = {
+          applicationStatus: 'Ongoing',
+          updatedAt: Date.now(),
+          applicationMetadata: {
+            updatedAt: Date.now(),
+            updatedBy: {
+              image: user?.image,
+              name: user?.name,
+              email: user?.email,
+            },
+            action: 'Reconsidered',
+          },
+        };
+        await axios.post('/api/update-interview', {
+          uid: selectedCandidate._id,
+          data: update,
+          interviewTransaction: {
+            interviewUID: selectedCandidate._id,
+            fromStage: stage,
+            action: 'Reconsidered',
+            updatedBy: {
+              image: user?.image,
+              name: user?.name,
+              email: user?.email,
+            },
+          },
+        });
+        if (timelineStages?.[stage]) {
+          const updatedStages = { ...timelineStages };
+          updatedStages[stage].droppedCandidates = updatedStages[
+            stage
+          ].droppedCandidates.filter(
+            (c: any) => c._id !== selectedCandidate._id
+          );
+          updatedStages[stage].candidates.push({
+            ...selectedCandidate,
+            ...update,
+          });
+          setAndSortCandidates(updatedStages);
+        }
+        candidateActionToast(
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginLeft: 8,
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#181D27' }}>
+                Candidate reconsidered
+              </span>
+              <span
+                style={{
+                  fontSize: 14,
+                  color: '#717680',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                You have reconsidered the candidate back to the ongoing stage.
+              </span>
+            </div>
+          </div>,
+          1300,
+          <i
+            className='la la-user-check'
+            style={{ color: '#039855', fontSize: 32 }}
+          ></i>
+        );
+      } catch (error) {
+        console.error('error', error);
+        errorToast('Failed to reconsider candidate', 1300);
+      } finally {
+        Swal.close();
+      }
+    }
+    if (action === 'approve') {
+      Swal.showLoading();
+      // reset interview data
+      try {
+        await axios.post('/api/reset-interview-data', {
+          id: selectedCandidate._id,
+        });
+
+        await axios.post('/api/update-interview', {
+          uid: selectedCandidate._id,
+          data: {
+            retakeRequest: {
+              status: 'Approved',
               updatedAt: Date.now(),
-              updatedBy: {
-                  image: user?.image,
-                  name: user?.name,
-                  email: user?.email,
+              approvedBy: {
+                image: user.image,
+                name: user.name,
+                email: user.email,
               },
-              action: "Endorsed",
-            }
-        }
-        if (candidateIndex !== -1) {
-            const updatedStages = {...timelineStages }
-            const candidate = updatedStages?.[fromStageKey]?.candidates?.[candidateIndex];
-            // Remove and add to new stage
-            
-            (updatedStages?.[toStageKey]?.candidates as any[]).push({...candidate, ...update});
-            (updatedStages?.[fromStageKey]?.candidates as any[]).splice(candidateIndex, 1);
-            setAndSortCandidates(updatedStages);
-            draggedCandidateRef.current = true;
-            setShowCandidateActionModal("endorse");
-            setSelectedCandidate({...candidate, stage: fromStageKey, toStage: toStageKey});
-        }
+            },
+          },
+          interviewTransaction: {
+            interviewUID: selectedCandidate._id,
+            fromStage: getStage(selectedCandidate),
+            toStage: 'Pending AI Interview',
+            action: 'Endorsed',
+            updatedBy: {
+              image: user?.image,
+              name: user?.name,
+              email: user?.email,
+            },
+          },
+        });
+        Swal.close();
+        candidateActionToast(
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginLeft: 8,
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#181D27' }}>
+                Approved request
+              </span>
+              <span
+                style={{
+                  fontSize: 14,
+                  color: '#717680',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                You have approved <strong>{selectedCandidate?.name}'s</strong>{' '}
+                request to retake interview.
+              </span>
+            </div>
+          </div>,
+          1300,
+          <i
+            className='la la-check-circle'
+            style={{ color: '#039855', fontSize: 32 }}
+          ></i>
+        );
+        setTimeout(() => {
+          window.location.href = `/recruiter-dashboard/careers/manage/${slug}`;
+        }, 1300);
+      } catch (error) {
+        console.error('error', error);
+        Swal.close();
+        errorToast('Failed to approve request', 1300);
+      }
     }
 
-    const handleReconsiderCandidate = (candidate: any) => {
-        setShowCandidateActionModal("reconsider");
-        setSelectedCandidate(candidate);
+    if (action === 'reject') {
+      Swal.showLoading();
+      try {
+        await axios.post('/api/update-interview', {
+          uid: selectedCandidate._id,
+          data: {
+            retakeRequest: {
+              status: 'Rejected',
+              updatedAt: Date.now(),
+              approvedBy: {
+                image: user.image,
+                name: user.name,
+                email: user.email,
+              },
+            },
+          },
+        });
+
+        Swal.close();
+        candidateActionToast(
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginLeft: 8,
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#181D27' }}>
+                Rejected request
+              </span>
+              <span
+                style={{
+                  fontSize: 14,
+                  color: '#717680',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                You have rejected <strong>{selectedCandidate?.name}'s</strong>{' '}
+                request to retake interview.
+              </span>
+            </div>
+          </div>,
+          1300,
+          <i
+            className='la la-times-circle'
+            style={{ color: '#D92D20', fontSize: 32 }}
+          ></i>
+        );
+        setTimeout(() => {
+          window.location.href = `/recruiter-dashboard/careers/manage/${slug}`;
+        }, 1300);
+      } catch (error) {
+        console.error('error', error);
+        Swal.close();
+        errorToast('Failed to reject request', 1300);
+      }
     }
 
-    const handleRetakeInterview = async (candidate: any) => {
-        setShowCandidateActionModal("retake");
-        setSelectedCandidate(candidate);
+    if (!action && draggedCandidateRef.current) {
+      // Revert the changes since cancelled
+      const { stage, toStage } = selectedCandidate;
+      const revertedStages = { ...timelineStages };
+      const newCandidateIndex = (
+        revertedStages?.[toStage]?.candidates as any[]
+      ).findIndex((c) => c._id.toString() === selectedCandidate._id);
+      (revertedStages?.[stage]?.candidates as any[]).push(selectedCandidate);
+      (revertedStages?.[toStage]?.candidates as any[]).splice(
+        newCandidateIndex,
+        1
+      );
+      setAndSortCandidates(revertedStages);
+      draggedCandidateRef.current = false;
     }
+  };
+  return (
+    <>
+      {/* Header */}
+      <HeaderBar
+        activeLink='Careers'
+        currentPage={formData.jobTitle}
+        icon='la la-suitcase'
+      />
+      <div className='container-fluid mt--7' style={{ paddingTop: '6rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <div style={{ maxWidth: '70%' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <h1 style={{ color: '#030217', fontWeight: 550, fontSize: 30 }}>
+                {formData.jobTitle}
+              </h1>
+              <CareerStatus status={formData.status} />
+            </div>
+            {isEditing && career?.status === 'inactive' && (
+              <p
+                style={{
+                  fontSize: 14,
+                  color: '#717680',
+                  margin: '4px 0 0 0',
+                  fontFamily: "'Satoshi', sans-serif",
+                }}
+              >
+                Edit job title in Step 1: Career Details & Team Access
+              </p>
+            )}
+          </div>
 
-    const handleCandidateAction = async (action: string) => {
-        setShowCandidateActionModal("");
-        if (action === "endorse") {
-            Swal.showLoading();
-            const { stage, toStage } = selectedCandidate;
-            const nextStage = toStage ? timelineStages[toStage].currentStage : timelineStages[stage].nextStage;
-            try {
-                const update = {
-                    currentStep: nextStage.step,
-                    status: nextStage.status,
-                    updatedAt: Date.now(),
-                    applicationMetadata: {
-                      updatedAt: Date.now(),
-                      updatedBy: {
-                          image: user?.image,
-                          name: user?.name,
-                          email: user?.email,
-                      },
-                      action: "Endorsed",
-                    }
-                }
-                await axios.post("/api/update-interview", {
-                    uid: selectedCandidate._id,
-                    data: update,
-                    interviewTransaction: {
-                        interviewUID: selectedCandidate._id,
-                        fromStage: stage,
-                        toStage: nextStage.name,
-                        action: "Endorsed",
-                        updatedBy: {
-                            image: user?.image,
-                            name: user?.name,
-                            email: user?.email,
-                        },
-                    }
-                });
-                if (!draggedCandidateRef.current) {
-                    const updatedStages = {...timelineStages };
-                    updatedStages[stage].candidates = updatedStages[stage].candidates.filter((c: any) => c._id !== selectedCandidate._id);
-                    updatedStages[nextStage.name].candidates.push({...selectedCandidate, ...update});
-                    setAndSortCandidates(updatedStages);
-                }
-                candidateActionToast(
-                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Candidate endorsed</span>
-                        <span style={{ fontSize: 14, color: "#717680", fontWeight: 500, whiteSpace: "nowrap" }}>You have endorsed the candidate to the next stage.</span>
-                      </div>
-                    </div>,
-                    1300, 
-                  <i className="la la-user-check" style={{ color: "#039855", fontSize: 32 }}></i>)
-            } catch (error) {
-                console.error("error", error);
-                errorToast("Failed to endorse candidate", 1300);
-            } finally {
-                Swal.close();
-            }
-        }
-
-        if (action === "drop") {
-            Swal.showLoading();
-            try {
-                const { stage } = selectedCandidate;
-                const update = {
-                    applicationStatus: "Dropped",
-                    updatedAt: Date.now(),
-                    applicationMetadata: {
-                    updatedAt: Date.now(),
-                    updatedBy: {
-                        image: user?.image,
-                        name: user?.name,
-                        email: user?.email,
-                    },
-                    action: "Dropped",
-                    }
-                }
-                await axios.post("/api/update-interview", {
-                    uid: selectedCandidate._id,
-                    data: update,
-                     // For logging history
-                     interviewTransaction: {
-                        interviewUID: selectedCandidate._id,
-                        fromStage: stage,
-                        action: "Dropped",
-                        updatedBy: {
-                            image: user?.image,
-                            name: user?.name,
-                            email: user?.email,
-                        },
-                    }
-                });
-                 // Update state
-                 if (timelineStages?.[stage]) {
-                    const updatedStages = {...timelineStages };
-                    updatedStages[stage].droppedCandidates.push({...selectedCandidate, ...update});
-                    updatedStages[stage].candidates = updatedStages[stage].candidates.filter((c: any) => c._id !== selectedCandidate._id);
-                    setAndSortCandidates(updatedStages);
-                }
-                candidateActionToast(
-                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Candidate dropped</span>
-                        <span style={{ fontSize: 14, color: "#717680", fontWeight: 500, whiteSpace: "nowrap" }}>You have dropped the candidate from the application process. </span>
-                      </div>
-                    </div>,
-                    1300, 
-                  <i className="la la-user-minus" style={{ color: "#D92D20", fontSize: 32 }}></i>)
-            } catch (error) {
-                console.error("error", error);
-                errorToast("Failed to drop candidate", 1300);
-            } finally {
-                Swal.close();
-            }
-        }
-
-        if (action === "reconsider") {
-            Swal.showLoading();
-            try {
-                const { stage } = selectedCandidate;
-                const update = {
-                    applicationStatus: "Ongoing",
-                    updatedAt: Date.now(),
-                    applicationMetadata: {
-                      updatedAt: Date.now(),
-                      updatedBy: {
-                          image: user?.image,
-                          name: user?.name,
-                          email: user?.email,
-                      },
-                      action: "Reconsidered",
-                    }
-                };
-                 await axios.post("/api/update-interview", {
-                    uid: selectedCandidate._id,
-                    data: update,
-                    interviewTransaction: {
-                        interviewUID: selectedCandidate._id,
-                        fromStage: stage,
-                        action: "Reconsidered",
-                        updatedBy: {
-                            image: user?.image,
-                            name: user?.name,
-                            email: user?.email,
-                        },
-                    }
-                });
-                if (timelineStages?.[stage]) {
-                    const updatedStages = {...timelineStages };
-                    updatedStages[stage].droppedCandidates = updatedStages[stage].droppedCandidates.filter((c: any) => c._id !== selectedCandidate._id);
-                    updatedStages[stage].candidates.push({...selectedCandidate, ...update});
-                    setAndSortCandidates(updatedStages);
-                }
-                candidateActionToast(
-                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Candidate reconsidered</span>
-                        <span style={{ fontSize: 14, color: "#717680", fontWeight: 500, whiteSpace: "nowrap" }}>You have reconsidered the candidate back to the ongoing stage.</span>
-                      </div>
-                    </div>,
-                    1300, 
-                  <i className="la la-user-check" style={{ color: "#039855", fontSize: 32 }}></i>)
-            } catch (error) {
-                console.error("error", error);
-                errorToast("Failed to reconsider candidate", 1300);
-            } finally {
-                Swal.close();
-            }
-        }
-        if (action === "approve") {
-            Swal.showLoading();
-            // reset interview data
-            try {
-            await axios.post("/api/reset-interview-data", {
-                id: selectedCandidate._id,
-            });
-            
-            await axios.post("/api/update-interview", {
-                uid: selectedCandidate._id,
-                data: {
-                    retakeRequest: {
-                    status: "Approved",
-                    updatedAt: Date.now(),
-                    approvedBy: {
-                        image: user.image,
-                        name: user.name,
-                        email: user.email,
-                    },
-                    },
-                },
-                interviewTransaction: {
-                    interviewUID: selectedCandidate._id,
-                    fromStage: getStage(selectedCandidate),
-                    toStage: "Pending AI Interview",
-                    action: "Endorsed",
-                    updatedBy: {
-                        image: user?.image,
-                        name: user?.name,
-                        email: user?.email,
-                    },
-                },
-            });
-            Swal.close();
-            candidateActionToast(
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Approved request</span>
-                    <span style={{ fontSize: 14, color: "#717680", fontWeight: 500, whiteSpace: "nowrap" }}>You have approved <strong>{selectedCandidate?.name}'s</strong> request to retake interview.</span>
-                  </div>
-                </div>,
-                1300, 
-              <i className="la la-check-circle" style={{ color: "#039855", fontSize: 32 }}></i>)
-            setTimeout(() => {
-                window.location.href = `/recruiter-dashboard/careers/manage/${slug}`;
-            }, 1300);
-            } catch (error) {
-                console.error("error", error);
-                Swal.close();
-                errorToast("Failed to approve request", 1300);
-            }
-        }
-
-        if (action === "reject") {      
-            Swal.showLoading();
-            try {
-            await axios.post("/api/update-interview", {
-                uid: selectedCandidate._id,
-                data: {
-                  retakeRequest: {
-                    status: "Rejected",
-                    updatedAt: Date.now(),
-                    approvedBy: {
-                      image: user.image,
-                      name: user.name,
-                      email: user.email,
-                    },
-                  },
-                },
-              });
-              
-            Swal.close();
-            candidateActionToast(
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 8, marginLeft: 8 }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: "#181D27" }}>Rejected request</span>
-                    <span style={{ fontSize: 14, color: "#717680", fontWeight: 500, whiteSpace: "nowrap" }}>You have rejected <strong>{selectedCandidate?.name}'s</strong> request to retake interview.</span>
-                  </div>
-                </div>,
-                1300,
-              <i className="la la-times-circle" style={{ color: "#D92D20", fontSize: 32 }}></i>)
-            setTimeout(() => {
-                window.location.href = `/recruiter-dashboard/careers/manage/${slug}`;
-            }, 1300);
-            } catch (error) {
-                console.error("error", error);
-                Swal.close();
-                errorToast("Failed to reject request", 1300);
-            }
-        }
-
-        if (!action && draggedCandidateRef.current) {
-            // Revert the changes since cancelled
-            const { stage, toStage } = selectedCandidate;
-            const revertedStages = {...timelineStages };
-            const newCandidateIndex = (revertedStages?.[toStage]?.candidates as any[]).findIndex((c) => c._id.toString() === selectedCandidate._id);
-            (revertedStages?.[stage]?.candidates as any[]).push(selectedCandidate);
-            (revertedStages?.[toStage]?.candidates as any[]).splice(newCandidateIndex, 1);
-            setAndSortCandidates(revertedStages);
-            draggedCandidateRef.current = false;
-        }
-    }
-    return (
-        <>
-            {/* Header */}
-            <HeaderBar activeLink="Careers" currentPage={formData.jobTitle} icon="la la-suitcase" />
-            <div className="container-fluid mt--7" style={{ paddingTop: "6rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                {isEditing ? 
-                    <input 
-                    type="text" 
-                    value={formData.jobTitle} 
-                    onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })} 
-                    style={{ color: "#030217", fontWeight: 550, fontSize: 30, width: "70%" }} 
-                    /> 
-                : <div style={{ maxWidth: "70%" }}>
-                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10 }}>
-                    <h1 style={{ color: "#030217", fontWeight: 550, fontSize: 30 }}>{formData.jobTitle}</h1>
-                    <CareerStatus status={formData.status} />
-                </div>
-                </div>}
-                {/* <div style={{ display: "flex", gap: 16, alignItems: "center", textAlign: "center" }}>
+          {/* <div style={{ display: "flex", gap: 16, alignItems: "center", textAlign: "center" }}>
                 <div style={{ color: "#030217" }}>
                     <div style={{ fontSize: 20, fontWeight: 600 }}>{hired}</div>
                     <div style={{ fontSize: 14 }}>Hired</div>
@@ -706,103 +1046,533 @@ export default function ManageCareerPage() {
                 </div> 
                 </div> */}
 
-                {/* Export candidates button */}
-                {interviewsInProgress > 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-                    <button 
-                    style={{
-                        background: "white",
-                        border: "1px solid #E9EAEB",
-                        borderRadius: 60,
-                        padding: "8px 16px",
-                        fontSize: 14,
-                        fontWeight: 700,
-                        display: "flex",
-                        alignItems: "center",
-                        cursor: "pointer",
-                    }}
-                    onClick={() => {
-                        // Download spreadsheed file of all candidates
-                        const candidates = Object.keys(timelineStages).flatMap((key) => {
-                            const stage = timelineStages[key];
-                            if (stage.candidates.length > 0) {
-                                return stage.candidates.map((candidate) => {
-                                    return {
-                                        ...candidate,
-                                        stage: key,
-                                    }
-                                });
-                            }
-                            return [];
+          {/* Export candidates button */}
+          {interviewsInProgress > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+              }}
+            >
+              <button
+                style={{
+                  background: 'white',
+                  border: '1px solid #E9EAEB',
+                  borderRadius: 60,
+                  padding: '8px 16px',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  // Download spreadsheed file of all candidates
+                  const candidates = Object.keys(timelineStages).flatMap(
+                    (key) => {
+                      const stage = timelineStages[key];
+                      if (stage.candidates.length > 0) {
+                        return stage.candidates.map((candidate) => {
+                          return {
+                            ...candidate,
+                            stage: key,
+                          };
                         });
-                        const csvContent = "data:text/csv;charset=utf-8,NAME,EMAIL,JOB TITLE,DATE APPLIED,APPLICATION STAGE,CV SCREENING RATING,AI INTERVIEW RATING" + "\n" + candidates.map((candidate) => {
-                            return [
-                                candidate.name?.replace(/,/g, ""),
-                                candidate.email?.replace(/,/g, ""),
-                                career.jobTitle?.replace(/,/g, ""),
-                                new Date(candidate.createdAt).toLocaleDateString(),
-                                candidate.stage,
-                                candidate.cvStatus || "N/A",
-                                candidate.jobFit || "N/A",
-                            ]
-                        }).join("\n");
-                        const encodedUri = encodeURI(csvContent);
-                        const link = document.createElement("a");
-                        link.setAttribute("href", encodedUri);
-                        link.setAttribute("download", `${career.jobTitle}-Candidates-${new Date().toLocaleDateString()}.csv`);
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    }}>
-                        <i className="la la-file-alt" style={{ fontSize: 20, marginRight: 8 }}></i>
-                        Export Candidates
-                    </button>
-                </div>}
+                      }
+                      return [];
+                    }
+                  );
+                  const csvContent =
+                    'data:text/csv;charset=utf-8,NAME,EMAIL,JOB TITLE,DATE APPLIED,APPLICATION STAGE,CV SCREENING RATING,AI INTERVIEW RATING' +
+                    '\n' +
+                    candidates
+                      .map((candidate) => {
+                        return [
+                          candidate.name?.replace(/,/g, ''),
+                          candidate.email?.replace(/,/g, ''),
+                          career.jobTitle?.replace(/,/g, ''),
+                          new Date(candidate.createdAt).toLocaleDateString(),
+                          candidate.stage,
+                          candidate.cvStatus || 'N/A',
+                          candidate.jobFit || 'N/A',
+                        ];
+                      })
+                      .join('\n');
+                  const encodedUri = encodeURI(csvContent);
+                  const link = document.createElement('a');
+                  link.setAttribute('href', encodedUri);
+                  link.setAttribute(
+                    'download',
+                    `${
+                      career.jobTitle
+                    }-Candidates-${new Date().toLocaleDateString()}.csv`
+                  );
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                <i
+                  className='la la-file-alt'
+                  style={{ fontSize: 20, marginRight: 8 }}
+                ></i>
+                Export Candidates
+              </button>
             </div>
-            <div style={{ padding: "16px 0 48px", background: "#FDFDFD", minHeight: "100vh" }}>
-            {/* Tabs */}
-            <div className="career-tab-container">
-                <div className="career-tab-content">
-                    {tabs.map((tab) => (
-                    <div 
-                    key={tab.value} 
-                    className={`career-tab-item ${activeTab === tab.value ? "active" : ""}`}
-                        onClick={() => setActiveTab(tab.value)}>
-                        <i className={`la la-${tab.icon}`} style={{ fontSize: 20, marginRight: 8 }}></i>
-                        {tab.label}
-                    </div>
-                    ))}
+          )}
+        </div>
+        <div
+          style={{
+            padding: '16px 0 48px',
+            background: '#FDFDFD',
+            minHeight: '100vh',
+          }}
+        >
+          {/* Tabs */}
+          <div className='career-tab-container'>
+            <div className='career-tab-content'>
+              {tabs.map((tab) => (
+                <div
+                  key={tab.value}
+                  className={`career-tab-item ${
+                    activeTab === tab.value ? 'active' : ''
+                  }`}
+                  onClick={() => setActiveTab(tab.value)}
+                >
+                  <i
+                    className={`la la-${tab.icon}`}
+                    style={{ fontSize: 20, marginRight: 8 }}
+                  ></i>
+                  {tab.label}
                 </div>
+              ))}
             </div>
-            {/* Career Tab Information */}
-            {activeTab === "application-timeline" && <CareerStageColumn 
-            timelineStages={timelineStages} 
-            handleCandidateMenuOpen={handleCandidateMenuOpen} 
-            handleCandidateCVOpen={handleCandidateCVOpen} 
-            handleDroppedCandidatesOpen={handleDroppedCandidatesOpen} 
-            handleEndorseCandidate={handleEndorseCandidate} 
-            handleDropCandidate={handleDropCandidate} 
-            dragEndorsedCandidate={dragEndorsedCandidate} 
-            handleCandidateHistoryOpen={handleCandidateHistoryOpen} 
-            handleRetakeInterview={handleRetakeInterview}
-            />}
-            {activeTab === "all-applicants" && <CareerApplicantsTable slug={career?.id} />}
-            {activeTab === "job-description" && <JobDescription formData={formData} setFormData={setFormData} editModal={tab === "edit"} isEditing={isEditing} setIsEditing={setIsEditing} handleCancelEdit={handleCancelEdit} />}
-            {candidateMenuOpen && <CandidateMenu 
-            handleCandidateMenuOpen={handleCandidateMenuOpen} 
-            candidate={selectedCandidate} 
-            handleCandidateCVOpen={handleCandidateCVOpen} 
-            handleEndorseCandidate={handleEndorseCandidate} 
-            handleDropCandidate={handleDropCandidate} 
-            handleCandidateAnalysisComplete={handleCandidateAnalysisComplete} 
-            handleRetakeInterview={handleRetakeInterview} 
-            />}
-            {candidateCVOpen && <CandidateCV candidate={selectedCandidateCV} setShowCandidateCV={setCandidateCVOpen} />}
-            {droppedCandidatesOpen && <DroppedCandidates handleDroppedCandidatesOpen={setDroppedCandidatesOpen} timelineStage={selectedDroppedCandidates} handleCandidateMenuOpen={handleCandidateMenuOpen} handleCandidateCVOpen={handleCandidateCVOpen} handleReconsiderCandidate={handleReconsiderCandidate} />}
-            {showCandidateHistory && <CandidateHistory candidate={selectedCandidateHistory} setShowCandidateHistory={setShowCandidateHistory} />}
-            {showCandidateActionModal && <CandidateActionModal candidate={selectedCandidate} onAction={handleCandidateAction} action={showCandidateActionModal} />}
-            <Tooltip className="career-fit-tooltip fade-in" id="career-fit-tooltip"/>
+          </div>
+          {/* Career Tab Information */}
+          {activeTab === 'application-timeline' && (
+            <CareerStageColumn
+              timelineStages={timelineStages}
+              handleCandidateMenuOpen={handleCandidateMenuOpen}
+              handleCandidateCVOpen={handleCandidateCVOpen}
+              handleDroppedCandidatesOpen={handleDroppedCandidatesOpen}
+              handleEndorseCandidate={handleEndorseCandidate}
+              handleDropCandidate={handleDropCandidate}
+              dragEndorsedCandidate={dragEndorsedCandidate}
+              handleCandidateHistoryOpen={handleCandidateHistoryOpen}
+              handleRetakeInterview={handleRetakeInterview}
+            />
+          )}
+          {activeTab === 'all-applicants' && (
+            <CareerApplicantsTable slug={career?.id} />
+          )}
+          {activeTab === 'job-description' &&
+            (isEditing ? (
+              <div style={{ marginTop: '24px' }}>
+                <CareerForm
+                  formType='edit'
+                  career={career}
+                  scrollToTeamAccess={scrollToTeamAccess}
+                  onScrollComplete={() => setScrollToTeamAccess(false)}
+                  initialStep={editingStep}
+                />
+              </div>
+            ) : (
+              <div
+                style={{
+                  marginTop: '24px',
+                }}
+              >
+                <div className='thread-set'>
+                  <div className='left-thread'>
+                    <Review
+                      jobTitle={career?.jobTitle}
+                      employmentType={career?.employmentType}
+                      workSetup={career?.workSetup}
+                      country={career?.country}
+                      province={career?.province}
+                      city={career?.location}
+                      minimumSalary={career?.minimumSalary?.toString()}
+                      maximumSalary={career?.maximumSalary?.toString()}
+                      salaryNegotiable={career?.salaryNegotiable}
+                      description={career?.description}
+                      members={career?.teamMembers || []}
+                      screeningSetting={career?.screeningSetting}
+                      secretPrompt={career?.secretPrompt}
+                      preScreeningQuestions={
+                        career?.preScreeningQuestions || []
+                      }
+                      interviewScreeningSetting={
+                        career?.interviewScreeningSetting
+                      }
+                      requireVideo={career?.requireVideo}
+                      interviewSecretPrompt={career?.interviewSecretPrompt}
+                      interviewQuestions={career?.questions || []}
+                      pipelineStages={[]}
+                      onEdit={() => setIsEditing(true)}
+                      onEditStep={(step) => {
+                        setEditingStep(step);
+                        setIsEditing(true);
+                      }}
+                      hideTeamAccess={true}
+                    />
+                  </div>
+                  <div className='right-thread'>
+                    {/* Team Access Card */}
+                    <div className='layered-card-outer'>
+                      <div
+                        className='layered-card-middle'
+                        style={{ borderRadius: '16px' }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            width: '100%',
+                            padding: '4px 12px',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 16,
+                              color: '#181D27',
+                              fontWeight: 700,
+                              fontFamily: "'Satoshi', sans-serif",
+                            }}
+                          >
+                            Team Access
+                          </span>
+                          <button
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+
+                              background: 'transparent',
+                              border: 'none',
+                              borderRadius: 8,
+                              cursor: 'pointer',
+                            }}
+                            onClick={() => {
+                              setScrollToTeamAccess(true);
+                              setIsEditing(true);
+                            }}
+                          >
+                            <EditIcon />
+                          </button>
+                        </div>
+                        <div
+                          className='layered-card-content'
+                          style={{
+                            padding: '16px',
+                            gap: '16px',
+                            borderRadius: '16px',
+                            border: 'none',
+                            boxShadow:
+                              'inset 0px 0px 2px 0px rgba(0, 16, 53, 0.16)',
+                          }}
+                        >
+                          {career?.teamMembers &&
+                          career.teamMembers.length > 0 ? (
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px',
+                              }}
+                            >
+                              {career.teamMembers.map(
+                                (member: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    style={{
+                                      display: 'flex',
+                                      flexDirection: 'row',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      width: '100%',
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        gap: 12,
+                                      }}
+                                    >
+                                      <img
+                                        src={member.avatar}
+                                        alt={member.name}
+                                        style={{
+                                          width: 40,
+                                          height: 40,
+                                          borderRadius: '50%',
+                                        }}
+                                      />
+                                      <div
+                                        style={{
+                                          display: 'flex',
+                                          flexDirection: 'column',
+                                          gap: 0,
+                                        }}
+                                      >
+                                        <span
+                                          style={{
+                                            fontSize: 14,
+                                            fontWeight: 700,
+                                            color: '#414651',
+                                            fontFamily: "'Satoshi', sans-serif",
+                                            lineHeight: '1.4285714285714286em',
+                                          }}
+                                        >
+                                          {member.name}{' '}
+                                          {member.role === 'owner'
+                                            ? '(You)'
+                                            : ''}
+                                        </span>
+                                        <span
+                                          style={{
+                                            fontSize: 14,
+                                            fontWeight: 500,
+                                            color: '#414651',
+                                            fontFamily: "'Satoshi', sans-serif",
+                                            lineHeight: '1.4285714285714286em',
+                                          }}
+                                        >
+                                          {member.email}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <span
+                                      style={{
+                                        fontSize: 16,
+                                        fontWeight: 500,
+                                        color: '#414651',
+                                        fontFamily: "'Satoshi', sans-serif",
+                                        lineHeight: '1.5em',
+                                      }}
+                                    >
+                                      {member.role === 'owner'
+                                        ? 'Job Owner'
+                                        : 'Contributor'}
+                                    </span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: 14,
+                                fontWeight: 500,
+                                color: '#717680',
+                                fontFamily: "'Satoshi', sans-serif",
+                              }}
+                            >
+                              No team members assigned
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Career Link */}
+                    <CareerLink career={career} />
+                    {/* Direct Interview Link */}
+                    <DirectInterviewLinkV2
+                      formData={career}
+                      setFormData={setCareer}
+                    />
+                    {/* Advanced Settings */}
+                    <div className='layered-card-outer'>
+                      <div
+                        className='layered-card-middle'
+                        style={{ borderRadius: '16px' }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                            width: '100%',
+                            padding: '4px 12px',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 16,
+                              color: '#181D27',
+                              fontWeight: 700,
+                              fontFamily: "'Satoshi', sans-serif",
+                            }}
+                          >
+                            Advanced Settings
+                          </span>
+                        </div>
+                        <div
+                          className='layered-card-content'
+                          style={{
+                            padding: '16px',
+                            gap: '12px',
+                            borderRadius: '16px',
+                            border: 'none',
+                            boxShadow:
+                              'inset 0px 0px 2px 0px rgba(0, 16, 53, 0.16)',
+                          }}
+                        >
+                          <button
+                            onClick={() => {
+                              Swal.fire({
+                                title: 'Are you sure?',
+                                text: "You won't be able to revert this!",
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#3085d6',
+                                cancelButtonColor: '#d33',
+                                confirmButtonText: 'Yes, delete it!',
+                              }).then(async (result) => {
+                                if (result.isConfirmed) {
+                                  Swal.fire({
+                                    title: 'Deleting career...',
+                                    text: 'Please wait while we delete the career...',
+                                    allowOutsideClick: false,
+                                    showConfirmButton: false,
+                                    willOpen: () => {
+                                      Swal.showLoading();
+                                    },
+                                  });
+                                  try {
+                                    const response = await axios.post(
+                                      '/api/delete-career',
+                                      {
+                                        id: career._id,
+                                      }
+                                    );
+                                    if (response.data.success) {
+                                      Swal.fire({
+                                        title: 'Deleted!',
+                                        text: 'The career has been deleted.',
+                                        icon: 'success',
+                                        allowOutsideClick: false,
+                                      }).then(() => {
+                                        window.location.href =
+                                          '/recruiter-dashboard/careers';
+                                      });
+                                    } else {
+                                      Swal.fire({
+                                        title: 'Error!',
+                                        text:
+                                          response.data.error ||
+                                          'Failed to delete the career',
+                                        icon: 'error',
+                                      });
+                                    }
+                                  } catch (error) {
+                                    console.error(
+                                      'Error deleting career:',
+                                      error
+                                    );
+                                    Swal.fire({
+                                      title: 'Error!',
+                                      text: 'An error occurred while deleting the career',
+                                      icon: 'error',
+                                    });
+                                  }
+                                }
+                              });
+                            }}
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 8,
+                              backgroundColor: '#FEF3F2',
+                              border: '1px solid #FEF3F2',
+                              borderRadius: '999px',
+                              cursor: 'pointer',
+                              color: '#B32318',
+                              fontSize: '14px',
+                              fontWeight: 700,
+                              fontFamily: "'Satoshi', sans-serif",
+                              padding: '8px 14px',
+                              width: '100%',
+                              boxShadow:
+                                '0px 1px 2px 0px rgba(10, 13, 18, 0.05)',
+                            }}
+                          >
+                            <i
+                              className='la la-trash'
+                              style={{ fontSize: 20 }}
+                            ></i>
+                            Delete this career
+                          </button>
+                          <p
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 500,
+                              color: '#717680',
+                              fontFamily: "'Satoshi', sans-serif",
+                              margin: 0,
+                            }}
+                          >
+                            Be careful, this action cannot be undone.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          {candidateMenuOpen && (
+            <CandidateMenu
+              handleCandidateMenuOpen={handleCandidateMenuOpen}
+              candidate={selectedCandidate}
+              handleCandidateCVOpen={handleCandidateCVOpen}
+              handleEndorseCandidate={handleEndorseCandidate}
+              handleDropCandidate={handleDropCandidate}
+              handleCandidateAnalysisComplete={handleCandidateAnalysisComplete}
+              handleRetakeInterview={handleRetakeInterview}
+            />
+          )}
+          {candidateCVOpen && (
+            <CandidateCV
+              candidate={selectedCandidateCV}
+              setShowCandidateCV={setCandidateCVOpen}
+            />
+          )}
+          {droppedCandidatesOpen && (
+            <DroppedCandidates
+              handleDroppedCandidatesOpen={setDroppedCandidatesOpen}
+              timelineStage={selectedDroppedCandidates}
+              handleCandidateMenuOpen={handleCandidateMenuOpen}
+              handleCandidateCVOpen={handleCandidateCVOpen}
+              handleReconsiderCandidate={handleReconsiderCandidate}
+            />
+          )}
+          {showCandidateHistory && (
+            <CandidateHistory
+              candidate={selectedCandidateHistory}
+              setShowCandidateHistory={setShowCandidateHistory}
+            />
+          )}
+          {showCandidateActionModal && (
+            <CandidateActionModal
+              candidate={selectedCandidate}
+              onAction={handleCandidateAction}
+              action={showCandidateActionModal}
+            />
+          )}
+          <Tooltip
+            className='career-fit-tooltip fade-in'
+            id='career-fit-tooltip'
+          />
         </div>
-        </div>
+      </div>
     </>
-    )
+  );
 }

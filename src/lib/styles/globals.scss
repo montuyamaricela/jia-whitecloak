@@ -2071,22 +2071,16 @@ $gifURL: "/gr-1.gif";
   gap: 8px;
   width: 100%;
   background-color: #f8f9fc;
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 8px;
 }
 
 .layered-card-outer {
   margin-top: 16px;
   width: 100%;
-  background: linear-gradient(
-    90deg,
-    #9fcaed 0%,
-    #ceb6da 33%,
-    #ebacc9 66%,
-    #fccec0 100%
-  );
-  border-radius: 20px;
-  padding-top: 10px;
+  background: transparent;
+  border-radius: 16px;
+  padding: 0;
 }
 
 .layered-card-content {

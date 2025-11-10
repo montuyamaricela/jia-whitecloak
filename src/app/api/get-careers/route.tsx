@@ -34,7 +34,11 @@ export async function GET(req: Request) {
         }
 
         if (status && status !== "All Statuses") {
-            filter.status = status === "Published" ? "active" : "inactive";
+            const statusMap = {
+                "Published": "active",
+                "Unpublished": "inactive"
+            };
+            filter.status = statusMap[status] || "active";
         }
 
         const careers = await db
@@ -114,9 +118,19 @@ export async function GET(req: Request) {
             { $sort: defaultSort },
             { $skip: (page - 1) * limit },
             { $limit: limit },
-            { 
+            {
                 $project: {
-                    questions: 0,
+                    jobTitle: 1,
+                    status: 1,
+                    createdAt: 1,
+                    lastActivityAt: 1,
+                    lastModified: 1,
+                    orgID: 1,
+                    currentStep: 1,
+                    completedSteps: 1,
+                    interviewsInProgress: 1,
+                    dropped: 1,
+                    hired: 1
                 }
             },
         ]).toArray();
