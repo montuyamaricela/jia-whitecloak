@@ -16,6 +16,7 @@ import CVReviewSettingsCard from './CVReview/CVReviewSettingsCard';
 import PreScreeningQuestionsCard from './CVReview/PreScreeningQuestionsCard';
 import AIInterviewSettingsCard from './InterviewSetup/AIInterviewSettingsCard';
 import AIInterviewQuestionsCard from './InterviewSetup/AIInterviewQuestionsCard';
+import Review from './Review/Review';
 import { hasStepData } from './schema/careerFormSchema';
 import { saveCareerOperation } from './utils/careerOperations';
 import * as segmentHandlers from './utils/segmentHandlers';
@@ -77,6 +78,12 @@ export default function CareerForm({
     register('city', { required: 'This is a required field.' });
     register('minimumSalary', {
       validate: (value) => {
+        const isNegotiable = watch('salaryNegotiable');
+
+        if (isNegotiable || value === 'negotiable') {
+          return true;
+        }
+
         if (!value || value === '' || value === '0') {
           return 'This is a required field.';
         }
@@ -93,7 +100,13 @@ export default function CareerForm({
           return 'Minimum salary must be greater than 0';
         }
 
-        if (maxSalaryValue && maxSalaryValue !== '' && maxSalary > 0 && minSalary > maxSalary) {
+        if (
+          maxSalaryValue &&
+          maxSalaryValue !== '' &&
+          maxSalaryValue !== 'negotiable' &&
+          maxSalary > 0 &&
+          minSalary > maxSalary
+        ) {
           return 'Minimum salary cannot be greater than maximum salary';
         }
 
@@ -102,6 +115,12 @@ export default function CareerForm({
     });
     register('maximumSalary', {
       validate: (value) => {
+        const isNegotiable = watch('salaryNegotiable');
+
+        if (isNegotiable || value === 'negotiable') {
+          return true;
+        }
+
         if (!value || value === '' || value === '0') {
           return 'This is a required field.';
         }
@@ -118,7 +137,13 @@ export default function CareerForm({
           return 'Maximum salary must be greater than 0';
         }
 
-        if (minSalaryValue && minSalaryValue !== '' && minSalary > 0 && maxSalary < minSalary) {
+        if (
+          minSalaryValue &&
+          minSalaryValue !== '' &&
+          minSalaryValue !== 'negotiable' &&
+          minSalary > 0 &&
+          maxSalary < minSalary
+        ) {
           return 'Maximum salary cannot be less than minimum salary';
         }
 
@@ -264,10 +289,17 @@ export default function CareerForm({
     // Step-specific validation
     if (currentStep === 0) {
       // Step 0: Career Details & Team Access
-      return (
+      const basicsValid =
         jobTitle?.trim().length > 0 &&
         description?.trim().length > 0 &&
-        workSetup?.trim().length > 0 &&
+        workSetup?.trim().length > 0;
+
+      if (salaryNegotiable) {
+        return basicsValid;
+      }
+
+      return (
+        basicsValid &&
         minimumSalary?.trim().length > 0 &&
         maximumSalary?.trim().length > 0
       );
@@ -319,6 +351,7 @@ export default function CareerForm({
 
   const confirmSaveCareer = (status: string) => {
     if (
+      !salaryNegotiable &&
       Number(minimumSalary) &&
       Number(maximumSalary) &&
       Number(minimumSalary) > Number(maximumSalary)
@@ -506,12 +539,13 @@ export default function CareerForm({
             />
             <PreScreeningQuestionsCard
               questions={preScreeningQuestions}
+              onQuestionsChange={(updatedQuestions) => {
+                setPreScreeningQuestions(updatedQuestions);
+              }}
               onAddCustom={() => {
-                // TODO: Implement add custom question functionality
                 console.log('Add custom question');
               }}
               onAddSuggested={(questionId) => {
-                // TODO: Implement add suggested question functionality
                 console.log('Add suggested question', questionId);
               }}
             />
@@ -540,7 +574,29 @@ export default function CareerForm({
       case 3:
         return <SegmentPlaceholder title='Pipeline Stages' />;
       case 4:
-        return <SegmentPlaceholder title='Review Career' />;
+        return (
+          <Review
+            jobTitle={jobTitle}
+            employmentType={employmentType}
+            workSetup={workSetup}
+            country={country}
+            province={province}
+            city={city}
+            minimumSalary={minimumSalary}
+            maximumSalary={maximumSalary}
+            salaryNegotiable={salaryNegotiable}
+            description={description}
+            members={members}
+            screeningSetting={screeningSetting}
+            secretPrompt={secretPrompt}
+            preScreeningQuestions={preScreeningQuestions}
+            interviewScreeningSetting={interviewScreeningSetting}
+            requireVideo={requireVideo}
+            interviewSecretPrompt={interviewSecretPrompt}
+            interviewQuestions={questions}
+            pipelineStages={[]}
+          />
+        );
       default:
         return null;
     }

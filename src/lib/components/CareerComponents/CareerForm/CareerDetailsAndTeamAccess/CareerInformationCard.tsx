@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import FormField from '@/lib/components/ui/custom/FormField';
 import CustomDropdown from '@/lib/components/CareerComponents/CustomDropdown';
 import { workSetupOptions, employmentTypeOptions } from '../constants';
@@ -81,6 +81,16 @@ export default function CareerInformationCard({
       }
     }
   };
+
+  useEffect(() => {
+    if (salaryNegotiable) {
+      setMinimumSalary('negotiable');
+      setMaximumSalary('negotiable');
+    } else if (minimumSalary === 'negotiable' || maximumSalary === 'negotiable') {
+      setMinimumSalary('');
+      setMaximumSalary('');
+    }
+  }, [salaryNegotiable]);
 
   return (
     <div className='career-card'>
@@ -233,13 +243,15 @@ export default function CareerInformationCard({
                       '₱'}
                   </span>
                   <input
-                    type='number'
+                    type={salaryNegotiable ? 'text' : 'number'}
                     value={minimumSalary}
                     onChange={(e) => setMinimumSalary(e.target.value)}
                     onBlur={(e) => setMinimumSalary(e.target.value)}
                     placeholder='0'
                     min={0}
                     className='salary-input-field'
+                    disabled={salaryNegotiable}
+                    readOnly={salaryNegotiable}
                   />
                 </div>
                 {errors?.minimumSalary && (
@@ -291,13 +303,15 @@ export default function CareerInformationCard({
                       '₱'}
                   </span>
                   <input
-                    type='number'
+                    type={salaryNegotiable ? 'text' : 'number'}
                     value={maximumSalary}
                     onChange={(e) => setMaximumSalary(e.target.value)}
                     onBlur={(e) => setMaximumSalary(e.target.value)}
                     placeholder='0'
                     min={0}
                     className='salary-input-field'
+                    disabled={salaryNegotiable}
+                    readOnly={salaryNegotiable}
                   />
                 </div>
                 {errors?.maximumSalary && (

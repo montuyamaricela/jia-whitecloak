@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '@/lib/styles/career-details-styles.scss';
 import CustomDropdown from '@/lib/components/CareerComponents/CustomDropdown';
 
@@ -71,10 +71,12 @@ export default function PreScreeningQuestionsCard({
   questions = [],
   onAddCustom,
   onAddSuggested,
+  onQuestionsChange,
 }: {
   questions?: any[];
   onAddCustom?: () => void;
   onAddSuggested?: (questionData: any) => void;
+  onQuestionsChange?: (questions: any[]) => void;
 }) {
   const [addedQuestions, setAddedQuestions] = useState<Set<number>>(new Set());
   const [questionValues, setQuestionValues] = useState<Record<number, any>>({});
@@ -88,38 +90,155 @@ export default function PreScreeningQuestionsCard({
     Array<{ type: 'suggested' | 'custom'; id: number | string }>
   >([]);
 
+  useEffect(() => {
+    if (questions && questions.length > 0) {
+      const newAddedQuestions = new Set<number>();
+      const newQuestionValues: Record<number, any> = {};
+      const newCustomQuestions: CustomQuestion[] = [];
+      const newOrder: Array<{ type: 'suggested' | 'custom'; id: number | string }> = [];
+
+      questions.forEach((q) => {
+        if (q.sourceType === 'suggested' && typeof q.sourceId === 'number') {
+          newAddedQuestions.add(q.sourceId);
+          newQuestionValues[q.sourceId] = {
+            type: q.type,
+            allOptions: q.allOptions,
+            options: q.options,
+            minimum: q.minimum,
+            maximum: q.maximum,
+            currency: q.currency,
+          };
+          newOrder.push({ type: 'suggested', id: q.sourceId });
+        } else if (q.sourceType === 'custom') {
+          const customQ: CustomQuestion = {
+            id: q.id || q.sourceId || `custom-${Date.now()}-${Math.random()}`,
+            question: q.question,
+            type: q.type,
+            options: q.options,
+            currency: q.currency,
+          };
+          newCustomQuestions.push(customQ);
+          newOrder.push({ type: 'custom', id: customQ.id });
+        }
+      });
+
+      setAddedQuestions(newAddedQuestions);
+      setQuestionValues(newQuestionValues);
+      setCustomQuestions(newCustomQuestions);
+      setAllQuestionsOrder(newOrder);
+    }
+  }, []);
+
+  const syncToParent = (
+    updatedAddedQuestions?: Set<number>,
+    updatedQuestionValues?: Record<number, any>,
+    updatedCustomQuestions?: CustomQuestion[],
+    updatedOrder?: Array<{ type: 'suggested' | 'custom'; id: number | string }>
+  ) => {
+    if (!onQuestionsChange) return;
+
+    const currentAddedQuestions = updatedAddedQuestions || addedQuestions;
+    const currentQuestionValues = updatedQuestionValues || questionValues;
+    const currentCustomQuestions = updatedCustomQuestions || customQuestions;
+    const currentOrder = updatedOrder || allQuestionsOrder;
+
+    const serializedQuestions: any[] = [];
+
+    currentOrder.forEach((item) => {
+      if (item.type === 'suggested' && typeof item.id === 'number') {
+        const suggestedQ = suggestedQuestions.find((q) => q.id === item.id);
+        if (suggestedQ && currentAddedQuestions.has(item.id)) {
+          const values = currentQuestionValues[item.id] || {};
+          const currentType = values.type || suggestedQ.type;
+
+          let consolidatedOptions = undefined;
+          if (currentType === 'dropdown' || currentType === 'checkboxes') {
+            const isNoticePeriod = item.id === 1;
+            if (isNoticePeriod) {
+              consolidatedOptions = values.allOptions || suggestedQ.options || [];
+            } else {
+              const baseOptions = suggestedQ.options || [];
+              const customOptions = values.options || [];
+              consolidatedOptions = [...baseOptions, ...customOptions];
+            }
+          }
+
+          serializedQuestions.push({
+            id: `suggested-${item.id}`,
+            sourceId: item.id,
+            sourceType: 'suggested',
+            question: suggestedQ.question,
+            type: currentType,
+            options: consolidatedOptions,
+            allOptions: values.allOptions,
+            minimum: values.minimum,
+            maximum: values.maximum,
+            currency: values.currency || suggestedQ.currency,
+          });
+        }
+      } else if (item.type === 'custom') {
+        const customQ = currentCustomQuestions.find((q) => q.id === item.id);
+        if (customQ) {
+          serializedQuestions.push({
+            id: customQ.id,
+            sourceId: customQ.id,
+            sourceType: 'custom',
+            question: customQ.question,
+            type: customQ.type,
+            options: customQ.options,
+            currency: customQ.currency,
+          });
+        }
+      }
+    });
+
+    onQuestionsChange(serializedQuestions);
+  };
+
   const handleAddQuestion = (questionId: number) => {
-    setAddedQuestions((prev) => new Set(prev).add(questionId));
-    setAllQuestionsOrder((prev) => [...prev, { type: 'suggested', id: questionId }]);
+    const newAddedQuestions = new Set(addedQuestions).add(questionId);
+    const newOrder = [...allQuestionsOrder, { type: 'suggested' as const, id: questionId }];
     const question = suggestedQuestions.find((q) => q.id === questionId);
+
+    let newQuestionValues = questionValues;
     if (question) {
-      setQuestionValues((prev) => ({
-        ...prev,
+      newQuestionValues = {
+        ...questionValues,
         [questionId]: {
-          ...prev[questionId],
+          ...questionValues[questionId],
           type: question.type,
           allOptions: question.options ? [...question.options] : undefined,
         },
-      }));
+      };
+      setQuestionValues(newQuestionValues);
     }
+
+    setAddedQuestions(newAddedQuestions);
+    setAllQuestionsOrder(newOrder);
+    syncToParent(newAddedQuestions, newQuestionValues, customQuestions, newOrder);
   };
 
   const handleDeleteQuestion = (questionId: number | string) => {
+    let newAddedQuestions = addedQuestions;
+    let newQuestionValues = questionValues;
+    let newCustomQuestions = customQuestions;
+
     if (typeof questionId === 'number') {
-      setAddedQuestions((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(questionId);
-        return newSet;
-      });
-      setQuestionValues((prev) => {
-        const newValues = { ...prev };
-        delete newValues[questionId];
-        return newValues;
-      });
+      newAddedQuestions = new Set(addedQuestions);
+      newAddedQuestions.delete(questionId);
+      newQuestionValues = { ...questionValues };
+      delete newQuestionValues[questionId];
+
+      setAddedQuestions(newAddedQuestions);
+      setQuestionValues(newQuestionValues);
     } else {
-      setCustomQuestions((prev) => prev.filter((q) => q.id !== questionId));
+      newCustomQuestions = customQuestions.filter((q) => q.id !== questionId);
+      setCustomQuestions(newCustomQuestions);
     }
-    setAllQuestionsOrder((prev) => prev.filter((q) => q.id !== questionId));
+
+    const newOrder = allQuestionsOrder.filter((q) => q.id !== questionId);
+    setAllQuestionsOrder(newOrder);
+    syncToParent(newAddedQuestions, newQuestionValues, newCustomQuestions, newOrder);
   };
 
   const handleAddCustomQuestion = () => {
@@ -128,9 +247,13 @@ export default function PreScreeningQuestionsCard({
       question: '',
       type: 'short-answer',
     };
-    setCustomQuestions((prev) => [...prev, newQuestion]);
-    setAllQuestionsOrder((prev) => [...prev, { type: 'custom', id: newQuestion.id }]);
+    const newCustomQuestions = [...customQuestions, newQuestion];
+    const newOrder = [...allQuestionsOrder, { type: 'custom' as const, id: newQuestion.id }];
+
+    setCustomQuestions(newCustomQuestions);
+    setAllQuestionsOrder(newOrder);
     setIsAddingCustom(true);
+    syncToParent(addedQuestions, questionValues, newCustomQuestions, newOrder);
   };
 
   const handleUpdateCustomQuestion = (
@@ -138,31 +261,33 @@ export default function PreScreeningQuestionsCard({
     field: string,
     value: any
   ) => {
-    setCustomQuestions((prev) =>
-      prev.map((q) => (q.id === id ? { ...q, [field]: value } : q))
+    const newCustomQuestions = customQuestions.map((q) =>
+      q.id === id ? { ...q, [field]: value } : q
     );
+    setCustomQuestions(newCustomQuestions);
+    syncToParent(addedQuestions, questionValues, newCustomQuestions, allQuestionsOrder);
   };
 
   const handleChangeQuestionType = (
     id: string | number,
     type: QuestionType
   ) => {
+    let newQuestionValues = questionValues;
+    let newCustomQuestions = customQuestions;
+
     if (typeof id === 'number') {
-      // Suggested question
-      setQuestionValues((prev) => {
-        const updated: any = { ...prev[id], type };
+      const updated: any = { ...questionValues[id], type };
 
-        if (type === 'dropdown' || type === 'checkboxes') {
-          const originalQuestion = suggestedQuestions.find((q) => q.id === id);
-          updated.allOptions = originalQuestion?.options || [''];
-        } else if (type === 'range') {
-          updated.currency = 'PHP';
-        }
+      if (type === 'dropdown' || type === 'checkboxes') {
+        const originalQuestion = suggestedQuestions.find((q) => q.id === id);
+        updated.allOptions = originalQuestion?.options || [''];
+      } else if (type === 'range') {
+        updated.currency = 'PHP';
+      }
 
-        return { ...prev, [id]: updated };
-      });
+      newQuestionValues = { ...questionValues, [id]: updated };
+      setQuestionValues(newQuestionValues);
     } else {
-      // Custom question
       const updatedQuestion: Partial<CustomQuestion> = { type };
 
       if (type === 'dropdown' || type === 'checkboxes') {
@@ -171,49 +296,53 @@ export default function PreScreeningQuestionsCard({
         updatedQuestion.currency = 'PHP';
       }
 
-      setCustomQuestions((prev) =>
-        prev.map((q) => (q.id === id ? { ...q, ...updatedQuestion } : q))
+      newCustomQuestions = customQuestions.map((q) =>
+        q.id === id ? { ...q, ...updatedQuestion } : q
       );
+      setCustomQuestions(newCustomQuestions);
     }
+
     setShowTypeDropdown(null);
+    syncToParent(addedQuestions, newQuestionValues, newCustomQuestions, allQuestionsOrder);
   };
 
   const handleAddOption = (questionId: number | string) => {
+    let newQuestionValues = questionValues;
+    let newCustomQuestions = customQuestions;
+
     if (typeof questionId === 'number') {
       const isNoticePeriod = questionId === 1;
-      setQuestionValues((prev) => {
-        if (isNoticePeriod) {
-          const currentOptions =
-            prev[questionId]?.allOptions ||
-            suggestedQuestions.find((q) => q.id === questionId)?.options ||
-            [];
-          return {
-            ...prev,
-            [questionId]: {
-              ...prev[questionId],
-              allOptions: [...currentOptions, ''],
-            },
-          };
-        } else {
-          const currentOptions = prev[questionId]?.options || [];
-          return {
-            ...prev,
-            [questionId]: {
-              ...prev[questionId],
-              options: [...currentOptions, ''],
-            },
-          };
-        }
-      });
+      if (isNoticePeriod) {
+        const currentOptions =
+          questionValues[questionId]?.allOptions ||
+          suggestedQuestions.find((q) => q.id === questionId)?.options ||
+          [];
+        newQuestionValues = {
+          ...questionValues,
+          [questionId]: {
+            ...questionValues[questionId],
+            allOptions: [...currentOptions, ''],
+          },
+        };
+      } else {
+        const currentOptions = questionValues[questionId]?.options || [];
+        newQuestionValues = {
+          ...questionValues,
+          [questionId]: {
+            ...questionValues[questionId],
+            options: [...currentOptions, ''],
+          },
+        };
+      }
+      setQuestionValues(newQuestionValues);
     } else {
-      setCustomQuestions((prev) =>
-        prev.map((q) =>
-          q.id === questionId
-            ? { ...q, options: [...(q.options || []), ''] }
-            : q
-        )
+      newCustomQuestions = customQuestions.map((q) =>
+        q.id === questionId ? { ...q, options: [...(q.options || []), ''] } : q
       );
+      setCustomQuestions(newCustomQuestions);
     }
+
+    syncToParent(addedQuestions, newQuestionValues, newCustomQuestions, allQuestionsOrder);
   };
 
   const handleUpdateOption = (
@@ -221,61 +350,67 @@ export default function PreScreeningQuestionsCard({
     optionIndex: number,
     value: string
   ) => {
+    let newQuestionValues = questionValues;
+    let newCustomQuestions = customQuestions;
+
     if (typeof questionId === 'number') {
-      setQuestionValues((prev) => {
-        const currentOptions = prev[questionId]?.options || [];
-        const newOptions = [...currentOptions];
-        newOptions[optionIndex] = value;
-        return {
-          ...prev,
-          [questionId]: {
-            ...prev[questionId],
-            options: newOptions,
-          },
-        };
-      });
+      const currentOptions = questionValues[questionId]?.options || [];
+      const newOptions = [...currentOptions];
+      newOptions[optionIndex] = value;
+      newQuestionValues = {
+        ...questionValues,
+        [questionId]: {
+          ...questionValues[questionId],
+          options: newOptions,
+        },
+      };
+      setQuestionValues(newQuestionValues);
     } else {
-      setCustomQuestions((prev) =>
-        prev.map((q) => {
-          if (q.id === questionId && q.options) {
-            const newOptions = [...q.options];
-            newOptions[optionIndex] = value;
-            return { ...q, options: newOptions };
-          }
-          return q;
-        })
-      );
+      newCustomQuestions = customQuestions.map((q) => {
+        if (q.id === questionId && q.options) {
+          const newOptions = [...q.options];
+          newOptions[optionIndex] = value;
+          return { ...q, options: newOptions };
+        }
+        return q;
+      });
+      setCustomQuestions(newCustomQuestions);
     }
+
+    syncToParent(addedQuestions, newQuestionValues, newCustomQuestions, allQuestionsOrder);
   };
 
   const handleRemoveOption = (
     questionId: number | string,
     optionIndex: number
   ) => {
+    let newQuestionValues = questionValues;
+    let newCustomQuestions = customQuestions;
+
     if (typeof questionId === 'number') {
-      setQuestionValues((prev) => {
-        const currentOptions = prev[questionId]?.options || [];
-        return {
-          ...prev,
-          [questionId]: {
-            ...prev[questionId],
-            options: currentOptions.filter((_, idx) => idx !== optionIndex),
-          },
-        };
-      });
+      const currentOptions = questionValues[questionId]?.options || [];
+      newQuestionValues = {
+        ...questionValues,
+        [questionId]: {
+          ...questionValues[questionId],
+          options: currentOptions.filter((_, idx) => idx !== optionIndex),
+        },
+      };
+      setQuestionValues(newQuestionValues);
     } else {
-      setCustomQuestions((prev) =>
-        prev.map((q) => {
-          if (q.id === questionId && q.options) {
-            return {
-              ...q,
-              options: q.options.filter((_, idx) => idx !== optionIndex),
-            };
-          }
-          return q;
-        })
-      );
+      newCustomQuestions = customQuestions.map((q) => {
+        if (q.id === questionId && q.options) {
+          return {
+            ...q,
+            options: q.options.filter((_, idx) => idx !== optionIndex),
+          };
+        }
+        return q;
+      });
+      setCustomQuestions(newCustomQuestions);
     }
+
+    syncToParent(addedQuestions, newQuestionValues, newCustomQuestions, allQuestionsOrder);
   };
 
   const handleUpdateRange = (
@@ -283,19 +418,26 @@ export default function PreScreeningQuestionsCard({
     field: 'minimum' | 'maximum' | 'currency',
     value: string
   ) => {
+    let newQuestionValues = questionValues;
+    let newCustomQuestions = customQuestions;
+
     if (typeof questionId === 'number') {
-      setQuestionValues((prev) => ({
-        ...prev,
+      newQuestionValues = {
+        ...questionValues,
         [questionId]: {
-          ...prev[questionId],
+          ...questionValues[questionId],
           [field]: value,
         },
-      }));
+      };
+      setQuestionValues(newQuestionValues);
     } else {
-      setCustomQuestions((prev) =>
-        prev.map((q) => (q.id === questionId ? { ...q, [field]: value } : q))
+      newCustomQuestions = customQuestions.map((q) =>
+        q.id === questionId ? { ...q, [field]: value } : q
       );
+      setCustomQuestions(newCustomQuestions);
     }
+
+    syncToParent(addedQuestions, newQuestionValues, newCustomQuestions, allQuestionsOrder);
   };
 
   const handleReorderQuestions = (
@@ -314,6 +456,7 @@ export default function PreScreeningQuestionsCard({
     updatedOrder.splice(targetIndex, 0, draggedQuestion);
 
     setAllQuestionsOrder(updatedOrder);
+    syncToParent(addedQuestions, questionValues, customQuestions, updatedOrder);
   };
 
   const renderCustomQuestionField = (question: CustomQuestion, index: number) => {
