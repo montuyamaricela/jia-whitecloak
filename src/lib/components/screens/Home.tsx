@@ -13,7 +13,7 @@ export default function () {
   const { user } = useAppContext();
   const jobSearchPath = `${
     window.innerWidth < 768 && user != null
-      ? pathConstants.jobOpenings
+      ? pathConstants.dashboardJobOpenings
       : pathConstants.jobOpenings
   }${search && search.trim() ? `?search=${search.trim()}` : ''}`;
 
