@@ -11,14 +11,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
-  if (
-    host.includes("hirejia.ai") &&
-    (pathname.startsWith("/dashboard") || pathname.startsWith("/job-openings") || pathname.startsWith("/login"))
-  ) {
-    const newUrl = new URL(request.url);
-    newUrl.hostname = "jia-whitecloak-production.up.railway.app";
-    return NextResponse.redirect(newUrl);
-  }
+  // if (
+  //   host.includes("hirejia.ai") &&
+  //   (pathname.startsWith("/dashboard") || pathname.startsWith("/job-openings") || pathname.startsWith("/login"))
+  // ) {
+  //   const newUrl = new URL(request.url);
+  //   newUrl.hostname = "jia-whitecloak-production.up.railway.app";
+  //   return NextResponse.redirect(newUrl);
+  // }
 
   if (host.startsWith("admin.hirejia.ai") && pathname === "/") {
     const url = request.nextUrl.clone();
@@ -33,12 +33,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(newUrl);
   }
 
-  // Redirect to hellojia.ai for applicant portal
-  if (!host.includes("hellojia") && !host.includes("localhost") && (pathname.includes("applicant") || pathname.includes("job-openings"))) {
-    const newUrl = new URL(request.url);
-    newUrl.hostname = `jia-whitecloak-production.up.railway.app`;
-    return NextResponse.redirect(newUrl);
-  }
+  // // Redirect to hellojia.ai for applicant portal
+  // if (!host.includes("hellojia") && !host.includes("localhost") && (pathname.includes("applicant") || pathname.includes("job-openings"))) {
+  //   const newUrl = new URL(request.url);
+  //   newUrl.hostname = `jia-whitecloak-production.up.railway.app`;
+  //   return NextResponse.redirect(newUrl);
+  // }
 
   return NextResponse.next();
 }
