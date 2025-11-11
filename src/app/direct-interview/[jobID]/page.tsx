@@ -1,6 +1,7 @@
 "use client";
 
 import { guid } from "@/lib/Utils";
+import { pathConstants } from "@/lib/utils/constantsV2";
 import axios from "axios";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
@@ -44,11 +45,7 @@ export default function () {
           showConfirmButton: true,
         }).then((res) => {
           if (res.isConfirmed) {
-            `${
-              window.location.origin.includes("localhost")
-                ? "/job-portal"
-                : `https://jia-whitecloak-production.up.railway.app`
-            }`;
+            window.location.href = pathConstants.dashboard;
           }
         });
       });
@@ -59,14 +56,10 @@ export default function () {
         title: "Not Available",
         text: "This interview link is no longer available.",
         allowOutsideClick: false,
-        showConfirmButton: false,
+        showConfirmButton: true,
       }).then((res) => {
         if (res.isConfirmed) {
-          `${
-            window.location.origin.includes("localhost")
-              ? "/job-portal"
-              : `https://jia-whitecloak-production.up.railway.app`
-          }`;
+          window.location.href = pathConstants.dashboard;
         }
       });
 
@@ -124,9 +117,7 @@ export default function () {
         confirmButtonText: "Go Back to Profile Page",
       }).then((res) => {
         if (res.isConfirmed) {
-          window.location.href = window.location.origin.includes("localhost")
-            ? "/job-portal"
-            : "https://jia-whitecloak-production.up.railway.app";
+          window.location.href = pathConstants.dashboard;
         }
       });
 

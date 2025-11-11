@@ -128,11 +128,7 @@ export default function () {
         src={assetConstants.jia}
         onClick={() =>
           handleRedirection(
-            `${
-              window.location.origin.includes("localhost")
-                ? "/job-portal"
-                : pathConstants.employee
-            }`
+            '/job-portal'
           )
         }
         onContextMenu={(e) => e.preventDefault()}

@@ -212,9 +212,7 @@ export default function ({ modalType, setModalType }) {
       sessionStorage.clear();
 
       window.location.href = `${
-        window.location.origin.includes("localhost")
-          ? "/job-portal"
-          : pathConstants.employee
+        '/job-portal'
       }`;
     };
   }

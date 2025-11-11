@@ -1,5 +1,6 @@
 "use client";
 import { signInWithGoogle } from "@/lib/firebase/firebaseClient";
+import { pathConstants } from "@/lib/utils/constantsV2";
 import { useEffect } from "react";
 
 export default function () {
@@ -9,9 +10,7 @@ export default function () {
         window.location.href = "/recruiter-dashboard";
       } else {
         // Applicant dashboard
-        window.location.href = window.location.origin.includes("localhost")
-          ? "/job-portal"
-          : "https://jia-whitecloak-production.up.railway.app";
+        window.location.href = '/job-portal';
       }
     }
   }, []);

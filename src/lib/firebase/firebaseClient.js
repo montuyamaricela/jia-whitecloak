@@ -167,9 +167,7 @@ export async function signInWithGoogle(type) {
 
       if (orgData.data.length == 0) {
         localStorage.role = "applicant";
-        window.location.href = window.location.origin.includes("localhost")
-          ? "/job-portal"
-          : "https://jia-whitecloak-production.up.railway.app";
+        window.location.href = '/job-portal';
         return;
       }
 

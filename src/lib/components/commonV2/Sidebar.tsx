@@ -77,11 +77,7 @@ export default function ({ children }) {
     if (user == null) {
       alert("Please sign in to continue.");
       handleRedirection(
-        `${
-          window.location.origin.includes("localhost")
-            ? "/job-portal"
-            : pathConstants.employee
-        }`
+        '/job-portal'
       );
     } else {
       links.forEach((link) => {

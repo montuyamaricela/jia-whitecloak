@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import VoiceAssistantV2 from "@/lib/VoiceAssistant/VoiceAssistantV2";
-import { useParams } from "next/navigation";
-import { useEffect } from "react";
+import VoiceAssistantV2 from '@/lib/VoiceAssistant/VoiceAssistantV2';
+import { useParams } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function InterviewPage() {
   const params = useParams();
@@ -10,11 +10,7 @@ export default function InterviewPage() {
 
   useEffect(() => {
     if (!localStorage.user) {
-      `${
-        window.location.origin.includes("localhost")
-          ? "/job-portal"
-          : "https://jia-whitecloak-production.up.railway.app"
-      }`;
+      `${'/job-portal'}`;
     }
   }, []);
 
