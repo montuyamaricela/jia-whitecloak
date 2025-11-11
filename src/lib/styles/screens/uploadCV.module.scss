@@ -1,3 +1,7 @@
+.uploadCVSection {
+  background: white !important;
+}
+
 .uploadCVContainer {
   width: 100%;
   max-width: 855px;
@@ -6,6 +10,7 @@
   flex-direction: column;
   gap: 40px;
   justify-self: center;
+  background: white;
   padding: 48px 16px 40px 16px;
   .uploadCVHeader {
     display: flex;
@@ -326,6 +331,14 @@
       }
     }
   }
+}
+
+.salaryInput {
+  padding: 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+  border: none !important;
 }
 
 @media (max-width: 768px) {

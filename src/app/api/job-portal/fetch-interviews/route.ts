@@ -46,6 +46,39 @@ export async function POST(request: Request) {
           preserveNullAndEmptyArrays: true,
         },
       },
+      {
+        $lookup: {
+          from: "careers",
+          let: { careerID: "$careerID" },
+          pipeline: [
+            {
+              $addFields: {
+                _id: { $toString: "$_id" },
+              },
+            },
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$_id", "$$careerID"],
+                },
+              },
+            },
+            {
+              $project: {
+                preScreeningQuestions: 1,
+                jobTitle: 1,
+              },
+            },
+          ],
+          as: "career",
+        },
+      },
+      {
+        $unwind: {
+          path: "$career",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
       { $match: { $and: matchConditions } },
       {
         $sort: {

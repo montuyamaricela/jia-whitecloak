@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       <div>
         <p>Dear ${interviewData.name},</p>
         <p>Your job application has been successfully submitted for the role of ${interviewData.jobTitle}.</p>
-        <p>You can access your interview here: <a href="https://www.hellojia.ai/interview/${interviewData.interviewID}">Interview Link</a></p>
+        <p>You can access your interview here: <a href="https://jia-whitecloak-production.up.railway.app/interview/${interviewData.interviewID}">Interview Link</a></p>
       </div>
     `,
     });

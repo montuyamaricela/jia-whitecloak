@@ -1,4 +1,4 @@
-@use "@/lib/styles/commonV2/animations.scss" as *;
+@use '@/lib/styles/commonV2/animations.scss' as *;
 
 .dashboard {
   height: 100%;
@@ -659,6 +659,34 @@
           }
         }
       }
+    }
+  }
+}
+
+.dateContainer {
+  display: flex;
+  gap: 14px;
+  svg {
+    margin: 3px 0 0 0;
+    background: #f5f5f5;
+    padding: 5px;
+    border-radius: 100%;
+  }
+  .dateTextContainer {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    line-height: 24px;
+    color: #6a6a6a;
+    .dateTitle {
+      font-weight: 700;
+      font-style: Bold;
+    }
+    .date {
+      display: flex;
+      gap: 4px;
+      font-weight: 400;
+      font-style: Regular;
     }
   }
 }

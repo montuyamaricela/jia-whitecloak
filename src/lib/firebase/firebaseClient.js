@@ -101,7 +101,7 @@ export async function signInWithGoogle(type) {
           } else if (result.dismiss === Swal.DismissReason.cancel) {
             window.location.href = host.includes("localhost")
               ? "/job-portal"
-              : "https://www.hellojia.ai";
+              : "https://jia-whitecloak-production.up.railway.app";
           }
         });
 
@@ -169,7 +169,7 @@ export async function signInWithGoogle(type) {
         localStorage.role = "applicant";
         window.location.href = window.location.origin.includes("localhost")
           ? "/job-portal"
-          : "https://www.hellojia.ai";
+          : "https://jia-whitecloak-production.up.railway.app";
         return;
       }
 

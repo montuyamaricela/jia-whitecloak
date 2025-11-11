@@ -55,7 +55,7 @@ export default function (props) {
 
     let dynamicLink = `${
       window.location.origin.includes("hirejia.ai")
-        ? "https://www.hellojia.ai"
+        ? "https://jia-whitecloak-production.up.railway.app"
         : window.location.origin
     }${directLink}`;
     setLink(dynamicLink);

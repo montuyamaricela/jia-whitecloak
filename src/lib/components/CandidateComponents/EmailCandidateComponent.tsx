@@ -147,7 +147,7 @@ ${companyName}</p>`,
 <li>In case you encounter any technical difficulties, there will be an interview retake request button on your dashboard.</li>
 </ul>
 
-<p>You may login to the <a href="https://www.hellojia.ai/dashboard" target="_blank" rel="noopener noreferrer">Jia Job Portal</a> Link to take your AI interview. Best of luck!</p>
+<p>You may login to the <a href="https://jia-whitecloak-production.up.railway.app/dashboard" target="_blank" rel="noopener noreferrer">Jia Job Portal</a> Link to take your AI interview. Best of luck!</p>
 
 <p>Best Regards,<br>
 ${companyName}</p>`,

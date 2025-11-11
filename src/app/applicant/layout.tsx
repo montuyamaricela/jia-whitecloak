@@ -33,8 +33,8 @@ export default function Layout({ children }) {
   ];
   // Check active link from the url
   useEffect(() => {
-    window.location.href = "https://www.hellojia.ai"
-    
+    window.location.href = "https://jia-whitecloak-production.up.railway.app"
+
     if (pathname) {
       let pathSplit = pathname.split("/");
 

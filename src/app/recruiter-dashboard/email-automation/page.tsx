@@ -285,7 +285,7 @@ export default function EmailAutomation() {
 			<!-- Logo -->
 			<tr>
 				<td style="text-align:center;padding:28px 0 10px;">
-					<img src="https://www.hellojia.ai/jia-new-logo.png" alt="Company Logo" width="80" style="display:block;margin:0 auto;max-width:120px;">
+					<img src="https://jia-whitecloak-production.up.railway.app/jia-new-logo.png" alt="Company Logo" width="80" style="display:block;margin:0 auto;max-width:120px;">
           </td>
 			</tr>
 
@@ -304,7 +304,7 @@ export default function EmailAutomation() {
 
 					<!-- Button -->
 					<p style="text-align:center;margin:24px 0;">
-						<a href="https://www.hellojia.ai/whitecloak/applicant" target="_blank" style="background-color:#2563eb;color:#ffffff;text-decoration:none;
+						<a href="https://jia-whitecloak-production.up.railway.app/whitecloak/applicant" target="_blank" style="background-color:#2563eb;color:#ffffff;text-decoration:none;
                         padding:12px 28px;border-radius:6px;font-size:16px;
                         font-family:Arial,Helvetica,sans-serif;display:inline-block;">
 							Submit Your CV
@@ -327,7 +327,7 @@ export default function EmailAutomation() {
 					style="padding:14px 28px;font-family:Arial,Helvetica,sans-serif;color:#6b7280;font-size:12px;line-height:1.4;">
 					If the button above doesn't work, copy and paste this URL into your browser:
 					<br>
-					<span style="word-break:break-all;">https://www.hellojia.ai/whitecloak/applicant</span>
+					<span style="word-break:break-all;">https://jia-whitecloak-production.up.railway.app/whitecloak/applicant</span>
 				</td>
 			</tr>
 		</table>
