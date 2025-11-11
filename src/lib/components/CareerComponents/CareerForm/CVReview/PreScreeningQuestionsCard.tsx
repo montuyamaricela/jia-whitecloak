@@ -851,9 +851,9 @@ export default function PreScreeningQuestionsCard({
     if (currentType === 'dropdown' || currentType === 'checkboxes') {
       const isNoticePeriod = question.id === 1;
       const allOptions = isNoticePeriod
-        ? questionValues[question.id]?.allOptions || question.options
+        ? questionValues[question.id]?.allOptions || question.options || []
         : [
-            ...question.options,
+            ...(question.options || []),
             ...(questionValues[question.id]?.options || []),
           ];
 
@@ -993,7 +993,7 @@ export default function PreScreeningQuestionsCard({
             <div className='dropdown-options-list'>
               {allOptions.map((option, index) => {
                 const isCustomOption =
-                  !isNoticePeriod && index >= question.options.length;
+                  !isNoticePeriod && index >= (question.options?.length || 0);
                 const isEditable = isNoticePeriod || isCustomOption;
 
                 return (
@@ -1010,7 +1010,7 @@ export default function PreScreeningQuestionsCard({
                               setQuestionValues((prev) => {
                                 const currentOptions =
                                   prev[question.id]?.allOptions ||
-                                  question.options;
+                                  question.options || [];
                                 const newOptions = [...currentOptions];
                                 newOptions[index] = e.target.value;
                                 return {
@@ -1024,7 +1024,7 @@ export default function PreScreeningQuestionsCard({
                             } else {
                               handleUpdateOption(
                                 question.id,
-                                index - question.options.length,
+                                index - (question.options?.length || 0),
                                 e.target.value
                               );
                             }
@@ -1044,7 +1044,7 @@ export default function PreScreeningQuestionsCard({
                             setQuestionValues((prev) => {
                               const currentOptions =
                                 prev[question.id]?.allOptions ||
-                                question.options;
+                                question.options || [];
                               const newOptions = currentOptions.filter(
                                 (_, idx) => idx !== index
                               );
@@ -1059,7 +1059,7 @@ export default function PreScreeningQuestionsCard({
                           } else {
                             handleRemoveOption(
                               question.id,
-                              index - question.options.length
+                              index - (question.options?.length || 0)
                             );
                           }
                         }}

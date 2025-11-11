@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectMongoDB from "@/lib/mongoDB/mongoDB";
 import { guid } from "@/lib/Utils";
 import { ObjectId } from "mongodb";
+import { validateAndSanitizeCareer } from "@/lib/utils/careerValidation";
 
 export async function POST(request: Request) {
   try {
@@ -33,7 +34,70 @@ export async function POST(request: Request) {
       // for unpublished careers
       currentStep,
       completedSteps,
+
+      // confirmation flag for sanitization warnings
+      confirmSanitization,
     } = await request.json();
+
+    const requestData = {
+      jobTitle,
+      description,
+      questions,
+      lastEditedBy,
+      createdBy,
+      screeningSetting,
+      orgID,
+      requireVideo,
+      location,
+      workSetup,
+      workSetupRemarks,
+      status,
+      salaryNegotiable,
+      minimumSalary,
+      maximumSalary,
+      country,
+      province,
+      employmentType,
+      secretPrompt,
+      preScreeningQuestions,
+      interviewScreeningSetting,
+      interviewSecretPrompt,
+      teamMembers,
+      currentStep,
+      completedSteps,
+    };
+
+    const validationResult = validateAndSanitizeCareer(
+      requestData,
+      false,
+      confirmSanitization === true
+    );
+
+    if (!validationResult.isValid && validationResult.requiresConfirmation) {
+      return NextResponse.json(
+        {
+          requiresConfirmation: true,
+          warnings: validationResult.warnings,
+          sanitizedPreview: validationResult.sanitizedData,
+        },
+        { status: 200 }
+      );
+    }
+
+    if (!validationResult.isValid) {
+      return NextResponse.json(
+        {
+          error: "Validation failed",
+          details: validationResult.errors.reduce((acc, err) => {
+            acc[err.field] = err.message;
+            return acc;
+          }, {} as Record<string, string>),
+        },
+        { status: 400 }
+      );
+    }
+
+    const sanitizedData = validationResult.sanitizedData;
 
     // Conditional validation based on status
     if (status === "inactive") {
@@ -104,35 +168,35 @@ export async function POST(request: Request) {
 
     const career = {
       id: guid(),
-      jobTitle,
-      description,
-      questions,
-      location,
-      workSetup,
-      workSetupRemarks,
+      jobTitle: sanitizedData.jobTitle,
+      description: sanitizedData.description,
+      questions: sanitizedData.questions,
+      location: sanitizedData.location,
+      workSetup: sanitizedData.workSetup,
+      workSetupRemarks: sanitizedData.workSetupRemarks,
       createdAt: new Date(),
       updatedAt: new Date(),
-      lastEditedBy,
-      createdBy,
-      status: status || "active",
-      screeningSetting,
-      secretPrompt,
-      preScreeningQuestions,
-      interviewScreeningSetting,
-      interviewSecretPrompt,
-      teamMembers,
-      orgID,
-      requireVideo,
+      lastEditedBy: sanitizedData.lastEditedBy,
+      createdBy: sanitizedData.createdBy,
+      status: sanitizedData.status || "active",
+      screeningSetting: sanitizedData.screeningSetting,
+      secretPrompt: sanitizedData.secretPrompt,
+      preScreeningQuestions: sanitizedData.preScreeningQuestions,
+      interviewScreeningSetting: sanitizedData.interviewScreeningSetting,
+      interviewSecretPrompt: sanitizedData.interviewSecretPrompt,
+      teamMembers: sanitizedData.teamMembers,
+      orgID: sanitizedData.orgID,
+      requireVideo: sanitizedData.requireVideo,
       lastActivityAt: new Date(),
-      salaryNegotiable,
-      minimumSalary,
-      maximumSalary,
-      country,
-      province,
-      employmentType,
+      salaryNegotiable: sanitizedData.salaryNegotiable,
+      minimumSalary: sanitizedData.minimumSalary,
+      maximumSalary: sanitizedData.maximumSalary,
+      country: sanitizedData.country,
+      province: sanitizedData.province,
+      employmentType: sanitizedData.employmentType,
       // Unpublished-specific fields
-      currentStep: currentStep || 0,
-      completedSteps: completedSteps || [],
+      currentStep: sanitizedData.currentStep || 0,
+      completedSteps: sanitizedData.completedSteps || [],
       lastModified: new Date(),
     };
 

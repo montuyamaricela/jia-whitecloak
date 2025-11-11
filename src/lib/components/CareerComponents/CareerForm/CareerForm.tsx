@@ -71,12 +71,12 @@ export default function CareerForm({
     register('jobTitle', {
       required: 'This is a required field.',
       validate: (value) =>
-        value.trim().length > 0 || 'This is a required field.',
+        (value?.trim()?.length ?? 0) > 0 || 'This is a required field.',
     });
     register('description', {
       required: 'This is a required field.',
       validate: (value) =>
-        value.trim().length > 0 || 'This is a required field.',
+        (value?.trim()?.length ?? 0) > 0 || 'This is a required field.',
     });
     register('employmentType', { required: 'This is a required field.' });
     register('workSetup', { required: 'This is a required field.' });

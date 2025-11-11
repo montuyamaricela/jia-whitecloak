@@ -86,7 +86,7 @@ export const useCareerFormState = (career?: Career, setValue?: UseFormSetValue<a
     career?.interviewSecretPrompt || ''
   );
   const [interviewQuestions, setInterviewQuestions] = useState<any[]>(
-    career?.interviewQuestions || []
+    career?.interviewQuestions || DEFAULT_QUESTIONS
   );
   const [employmentType, setEmploymentType] = useState(
     career?.employmentType || 'Full-Time'
