@@ -1,6 +1,8 @@
 import React from 'react';
+import { createRoot } from 'react-dom/client';
 import axios from 'axios';
 import { candidateActionToast, errorToast } from '@/lib/Utils';
+import XSSWarningModal from '../../XSSWarningModal/XSSWarningModal';
 
 interface UserInfo {
   image: string;
@@ -42,6 +44,49 @@ interface SaveCareerParams {
   user: UserInfo;
   savingRef?: React.MutableRefObject<boolean>;
   onSavingStateChange: (isSaving: boolean) => void;
+}
+
+interface SanitizationWarning {
+  field: string;
+  message: string;
+  original: string;
+  sanitized: string;
+}
+
+/**
+ * Shows XSS warning modal and returns user's decision
+ */
+function showXSSWarningModal(warnings: SanitizationWarning[]): Promise<boolean> {
+  return new Promise((resolve) => {
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'xss-warning-modal-container';
+    document.body.appendChild(modalContainer);
+
+    const root = createRoot(modalContainer);
+
+    const cleanup = () => {
+      root.unmount();
+      document.body.removeChild(modalContainer);
+    };
+
+    const handleConfirm = () => {
+      cleanup();
+      resolve(true);
+    };
+
+    const handleCancel = () => {
+      cleanup();
+      resolve(false);
+    };
+
+    root.render(
+      <XSSWarningModal
+        warnings={warnings}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
+    );
+  });
 }
 
 /**
@@ -108,7 +153,76 @@ export const saveCareerOperation = async ({
   try {
     const endpoint =
       actionType === 'create' ? '/api/add-career' : '/api/update-career';
+
     const response = await axios.post(endpoint, payload);
+
+    if (response.status === 200 && response.data.requiresConfirmation) {
+      onSavingStateChange(false);
+      if (savingRef) {
+        savingRef.current = false;
+      }
+
+      const userConfirmed = await showXSSWarningModal(response.data.warnings);
+
+      if (!userConfirmed) {
+        return false;
+      }
+
+      if (savingRef) {
+        savingRef.current = true;
+      }
+      onSavingStateChange(true);
+
+      const confirmedPayload = {
+        ...payload,
+        confirmSanitization: true,
+      };
+
+      const confirmedResponse = await axios.post(endpoint, confirmedPayload);
+
+      if (confirmedResponse.status === 200) {
+        const successMessage = shouldRedirect
+          ? actionType === 'create'
+            ? `Career added ${status === 'active' ? 'and published' : ''}`
+            : 'Career updated'
+          : 'Progress saved';
+
+        candidateActionToast(
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              marginLeft: 8,
+            }}
+          >
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#181D27' }}>
+              {successMessage}
+            </span>
+          </div>,
+          1300,
+          <i
+            className='la la-check-circle'
+            style={{ color: '#039855', fontSize: 32 }}
+          ></i>
+        );
+
+        if (shouldRedirect) {
+          setTimeout(() => {
+            const redirectUrl =
+              actionType === 'create'
+                ? '/recruiter-dashboard/careers'
+                : `/recruiter-dashboard/careers/manage/${careerData._id}`;
+            window.location.href = redirectUrl;
+          }, 1300);
+        }
+
+        return true;
+      }
+
+      return false;
+    }
 
     if (response.status === 200) {
       const successMessage = shouldRedirect
