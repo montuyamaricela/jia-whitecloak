@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
     (pathname.startsWith("/dashboard") || pathname.startsWith("/job-openings") || pathname.startsWith("/login"))
   ) {
     const newUrl = new URL(request.url);
-    newUrl.hostname = "hellojia.ai";
+    newUrl.hostname = "jia-whitecloak-production.up.railway.app";
     return NextResponse.redirect(newUrl);
   }
 
@@ -29,14 +29,14 @@ export function middleware(request: NextRequest) {
    // Redirect to hirejia.ai for recruiter portal
   if (!host.includes("hirejia") && !host.includes("localhost") && pathname.includes("old-dashboard")) {
     const newUrl = new URL(request.url);
-    newUrl.hostname = `hirejia.ai`;
+    newUrl.hostname = `jia-whitecloak-production.up.railway.app`;
     return NextResponse.redirect(newUrl);
   }
 
   // Redirect to hellojia.ai for applicant portal
   if (!host.includes("hellojia") && !host.includes("localhost") && (pathname.includes("applicant") || pathname.includes("job-openings"))) {
     const newUrl = new URL(request.url);
-    newUrl.hostname = `hellojia.ai`;
+    newUrl.hostname = `jia-whitecloak-production.up.railway.app`;
     return NextResponse.redirect(newUrl);
   }
 
