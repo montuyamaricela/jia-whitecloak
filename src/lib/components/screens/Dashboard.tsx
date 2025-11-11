@@ -1,15 +1,15 @@
 // TODO (Job Portal) - Check API
 
-"use client";
+'use client';
 
-import Loader from "@/lib/components/commonV2/Loader";
-import styles from "@/lib/styles/screens/dashboard.module.scss";
-import { useAppContext } from "@/lib/context/ContextV2";
-import { assetConstants, pathConstants } from "@/lib/utils/constantsV2";
-import { processDisplayDate } from "@/lib/utils/helpersV2";
-import axios from "axios";
-import Fuse from "fuse.js";
-import { useEffect, useState } from "react";
+import Loader from '@/lib/components/commonV2/Loader';
+import styles from '@/lib/styles/screens/dashboard.module.scss';
+import { useAppContext } from '@/lib/context/ContextV2';
+import { assetConstants, pathConstants } from '@/lib/utils/constantsV2';
+import { processDisplayDate } from '@/lib/utils/helpersV2';
+import axios from 'axios';
+import Fuse from 'fuse.js';
+import { useEffect, useState } from 'react';
 
 export default function () {
   const [activeInterviewIndex, setActiveInterviewIndex] = useState(null);
@@ -20,73 +20,73 @@ export default function () {
   const [filteredArchiveInterview, setFilteredArchiveInterview] = useState([]);
   const [filterDropdown, setFilterDropdown] = useState(false);
   const [filterValue, setFilterValue] = useState(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [viewDropdown, setViewDropdown] = useState(null);
   const { user, setModalType } = useAppContext();
   const applicationPhase = [
-    "For CV Screening",
-    "For AI Interview",
-    "For AI Interview Review",
-    "For Human Interview",
-    "For Human Interview Review",
+    'For CV Screening',
+    'For AI Interview',
+    'For AI Interview Review',
+    'For Human Interview',
+    'For Human Interview Review',
   ];
   const applicationStep = [
-    "CV Screening",
-    "AI Interview",
-    "Human Interview",
-    "Job Offer",
+    'CV Screening',
+    'AI Interview',
+    'Human Interview',
+    'Job Offer',
   ];
   const buttonStatus = [
     {
-      buttonText: "Submit CV",
+      buttonText: 'Submit CV',
       disabled: false,
-      spanText: "Required",
+      spanText: 'Required',
       handleClick: function (interview) {
-        setModalType("loading");
-        sessionStorage.setItem("selectedCareer", JSON.stringify(interview));
+        setModalType('loading');
+        sessionStorage.setItem('selectedCareer', JSON.stringify(interview));
         window.location.href = pathConstants.uploadCV;
       },
     },
     {
-      buttonText: "Start AI Interview",
+      buttonText: 'Start AI Interview',
       disabled: true,
-      spanText: "Required",
+      spanText: 'Required',
       status: applicationPhase[0],
       handleClick: function () {
         return true;
       },
     },
     {
-      buttonText: "Start AI Interview",
+      buttonText: 'Start AI Interview',
       disabled: false,
-      spanText: "Required",
+      spanText: 'Required',
       status: applicationPhase[1],
       handleClick: function (interview) {
-        setModalType("loading");
-        sessionStorage.setItem("interviewRedirection", pathConstants.dashboard);
+        setModalType('loading');
+        sessionStorage.setItem('interviewRedirection', pathConstants.dashboard);
         window.location.href = `/interview/${interview.interviewID}`;
       },
     },
     {
-      buttonText: "Request to Retake",
-      spanText: "Optional",
+      buttonText: 'Request to Retake',
+      spanText: 'Optional',
       status: applicationPhase[2],
       handleClick: function (interview) {
         if (interview.interviewDuration < 5) {
           retakeInterview(interview);
         } else {
-          sessionStorage.setItem("selectedCareer", JSON.stringify(interview));
-          setModalType("retake");
+          sessionStorage.setItem('selectedCareer', JSON.stringify(interview));
+          setModalType('retake');
         }
       },
     },
   ];
   const dropdownItems = [
     {
-      text: "Cancel Application",
+      text: 'Cancel Application',
       handleClick: function (interview) {
-        sessionStorage.setItem("selectedCareer", JSON.stringify(interview));
-        setModalType("cancel");
+        sessionStorage.setItem('selectedCareer', JSON.stringify(interview));
+        setModalType('cancel');
         setViewDropdown(null);
       },
     },
@@ -96,77 +96,77 @@ export default function () {
       description:
         "Thanks for applying! However, after reviewing your CV, we found that your current experience isn’t the best match for this role. We encourage you to reapply in the future once you've gained more relevant experience.",
       tips: [
-        "Try highlighting more results-driven achievements in your CV",
-        "Align your experience more closely with the job requirements",
-        "Consider adding relevant certifications or skills",
+        'Try highlighting more results-driven achievements in your CV',
+        'Align your experience more closely with the job requirements',
+        'Consider adding relevant certifications or skills',
       ],
     },
     [applicationStep[1]]: {
       description:
-        "Thanks for applying! After reviewing your AI interview responses, we found that your current experience and answers aren’t the best fit for this role. We encourage you to reapply in the future after refining your responses and gaining more relevant experience.",
+        'Thanks for applying! After reviewing your AI interview responses, we found that your current experience and answers aren’t the best fit for this role. We encourage you to reapply in the future after refining your responses and gaining more relevant experience.',
       tips: [
-        "Be more specific with examples that show impact",
-        "Practice structuring your answers (e.g., using STAR: Situation, Task, Action, Result)",
-        "Demonstrate deeper familiarity with the role’s key skills",
+        'Be more specific with examples that show impact',
+        'Practice structuring your answers (e.g., using STAR: Situation, Task, Action, Result)',
+        'Demonstrate deeper familiarity with the role’s key skills',
       ],
     },
     [applicationStep[2]]: {
       description:
-        "Thank you for the time and effort you put into this process. While we were impressed by aspects of your background, we’ve decided to move forward with another candidate. We hope you’ll consider applying again in the future.",
+        'Thank you for the time and effort you put into this process. While we were impressed by aspects of your background, we’ve decided to move forward with another candidate. We hope you’ll consider applying again in the future.',
       tips: [
-        "Reflect on common interview questions and prepare tailored responses",
-        "Continue building your experience in areas related to the role",
-        "Keep showcasing your strengths — you were close!",
+        'Reflect on common interview questions and prepare tailored responses',
+        'Continue building your experience in areas related to the role',
+        'Keep showcasing your strengths — you were close!',
       ],
     },
     [applicationStep[3]]: {
       description:
-        "Thank you for the time and effort you put into this process. While we were impressed by aspects of your background, we’ve decided to move forward with another candidate. We hope you’ll consider applying again in the future.",
+        'Thank you for the time and effort you put into this process. While we were impressed by aspects of your background, we’ve decided to move forward with another candidate. We hope you’ll consider applying again in the future.',
       tips: [
-        "Reflect on common interview questions and prepare tailored responses",
-        "Continue building your experience in areas related to the role",
-        "Keep showcasing your strengths — you were close!",
+        'Reflect on common interview questions and prepare tailored responses',
+        'Continue building your experience in areas related to the role',
+        'Keep showcasing your strengths — you were close!',
       ],
     },
     Applied: {
       description:
-        "Thanks for applying! After an initial review, we’ve decided not to move forward with your application at this time. We truly appreciate your interest and encourage you to apply again in the future.",
+        'Thanks for applying! After an initial review, we’ve decided not to move forward with your application at this time. We truly appreciate your interest and encourage you to apply again in the future.',
       tips: [
-        "Consider applying to roles that more closely match your background",
-        "Tailor your CV and application materials to highlight relevant strengths",
-        "Continue building experience aligned with your target roles",
+        'Consider applying to roles that more closely match your background',
+        'Tailor your CV and application materials to highlight relevant strengths',
+        'Continue building experience aligned with your target roles',
       ],
     },
     generic: {
       description:
-        "Thanks for applying! While we won’t be moving forward with your application, we appreciate your interest and encourage you to reapply in the future as you continue to grow your experience.",
+        'Thanks for applying! While we won’t be moving forward with your application, we appreciate your interest and encourage you to reapply in the future as you continue to grow your experience.',
       tips: [
-        "Highlight measurable achievements and outcomes in your application",
-        "Tailor your experiences and responses to align with the role",
-        "Continue building relevant skills and gaining practical experience",
+        'Highlight measurable achievements and outcomes in your application',
+        'Tailor your experiences and responses to align with the role',
+        'Continue building relevant skills and gaining practical experience',
       ],
     },
   };
   const filters = [
-    "All Application Stages",
+    'All Application Stages',
     ...applicationStep,
-    "Application Closed",
+    'Application Closed',
   ];
-  const interviewStatus = ["Ongoing", "Dropped", "Hired", "Cancelled"];
+  const interviewStatus = ['Ongoing', 'Dropped', 'Hired', 'Cancelled'];
   const stepNote = [
-    "Your CV is being reviewed by the hiring team.",
-    "Your interview is being reviewed by the hiring team.",
+    'Your CV is being reviewed by the hiring team.',
+    'Your interview is being reviewed by the hiring team.',
   ];
-  const stepStatus = ["Completed", "Pending", "In Progress"];
+  const stepStatus = ['Completed', 'Pending', 'In Progress'];
   const tabs = [
     {
       image: assetConstants.briefcaseV2,
-      name: "Active",
+      name: 'Active',
       value: filteredActiveInterview.length,
     },
     {
       image: assetConstants.archive,
-      name: "Archived",
+      name: 'Archived',
       value: filteredArchiveInterview.length,
     },
   ];
@@ -204,12 +204,12 @@ export default function () {
   }
 
   function handleViewScreeningResult(interview) {
-    sessionStorage.setItem("selectedCareer", JSON.stringify(interview));
-    setModalType("screening");
+    sessionStorage.setItem('selectedCareer', JSON.stringify(interview));
+    setModalType('screening');
   }
 
   function processButtonState(interview): any {
-    if (interview.currentStep == "Applied") {
+    if (interview.currentStep == 'Applied') {
       return buttonStatus[0];
     }
 
@@ -219,7 +219,7 @@ export default function () {
   }
 
   function processCurrentStep(interview) {
-    if (interview.currentStep == "Applied") {
+    if (interview.currentStep == 'Applied') {
       return applicationStep[0];
     }
 
@@ -231,13 +231,13 @@ export default function () {
       }
 
       if (interview.currentStep == applicationStep[1]) {
-        return interview.status.toLowerCase().includes("review")
+        return interview.status.toLowerCase().includes('review')
           ? `${applicationStep[1]} Review`
           : applicationStep[2];
       }
 
       if (interview.currentStep == applicationStep[2]) {
-        return interview.status.toLowerCase().includes("review")
+        return interview.status.toLowerCase().includes('review')
           ? `${applicationStep[2]} Review`
           : `Pending ${applicationStep[3]}`;
       }
@@ -290,7 +290,7 @@ export default function () {
     const stepIndex = applicationStep.indexOf(step);
     let currentStepIndex = applicationStep.indexOf(interview.currentStep);
 
-    if (interview.currentStep == "Applied") {
+    if (interview.currentStep == 'Applied') {
       if (stepIndex == 0) {
         return isAdvance ? stepStatus[2] : stepStatus[1];
       }
@@ -327,7 +327,7 @@ export default function () {
     if (
       interview.currentStep &&
       currentStepIndex == -1 &&
-      interview.currentStep != "Applied"
+      interview.currentStep != 'Applied'
     ) {
       return stepStatus[0];
     }
@@ -352,7 +352,7 @@ export default function () {
       if (search.trim()) {
         const fuse = new Fuse(filteredInterviews, {
           threshold: 0.3,
-          keys: ["jobTitle"],
+          keys: ['jobTitle'],
         });
         const searchResults = fuse.search(search.trim());
 
@@ -369,9 +369,9 @@ export default function () {
 
   function fetchInterviews() {
     axios({
-      method: "POST",
-      url: "/api/job-portal/fetch-interviews",
-      data: { email: user.email, interviewID: "all" },
+      method: 'POST',
+      url: '/api/job-portal/fetch-interviews',
+      data: { email: user.email, interviewID: 'all' },
     })
       .then((res) => {
         const result = res.data;
@@ -389,7 +389,7 @@ export default function () {
         setFilteredArchiveInterview(archivedInterviews);
       })
       .catch((err) => {
-        alert("Error fetching interviews.");
+        alert('Error fetching interviews.');
         console.log(err);
       })
       .finally(() => {
@@ -398,11 +398,11 @@ export default function () {
   }
 
   function manageInterview(data) {
-    setModalType("loading");
+    setModalType('loading');
 
     axios({
-      url: "/api/whitecloak/manage-application",
-      method: "POST",
+      url: '/api/whitecloak/manage-application',
+      method: 'POST',
       data,
     })
       .then(() => {
@@ -410,17 +410,17 @@ export default function () {
       })
       .catch((err) => {
         console.log(err);
-        alert(err.response.data.message || "Job management failed.");
+        alert(err.response.data.message || 'Job management failed.');
         setModalType(null);
       });
   }
 
   function retakeInterview(interview) {
-    setModalType("loading");
+    setModalType('loading');
 
     axios({
-      method: "POST",
-      url: "/api/reset-interview-data",
+      method: 'POST',
+      url: '/api/reset-interview-data',
       data: {
         id: interview._id,
       },
@@ -431,11 +431,11 @@ export default function () {
         if (result.success) {
           window.location.href = `/interview/${interview.interviewID}`;
         } else {
-          alert("Failed to submit retake interview.");
+          alert('Failed to submit retake interview.');
         }
       })
       .catch((err) => {
-        alert("Failed to submit retake interview.");
+        alert('Failed to submit retake interview.');
         console.log(err);
       })
       .finally(() => {
@@ -448,7 +448,7 @@ export default function () {
       <div className={styles.infoFilter}>
         <div className={styles.textContainer}>
           <span className={styles.name}>
-            Welcome, {user.name.split(" ")[0]}!
+            Welcome, {user.name.split(' ')[0]}!
           </span>
           <span className={styles.description}>
             Track all of your job applications in one place
@@ -457,12 +457,12 @@ export default function () {
 
         <div className={styles.buttonContainer}>
           <button
-            className="secondaryBtn"
+            className='secondaryBtn'
             onClick={() => setFilterDropdown(!filterDropdown)}
-            style={{ display: "none" }}
+            style={{ display: 'none' }}
           >
-            <img alt="" src={assetConstants.filter} />
-            {filterValue ? filterValue : "Filters"}
+            <img alt='' src={assetConstants.filter} />
+            {filterValue ? filterValue : 'Filters'}
           </button>
 
           {filterDropdown && (
@@ -470,7 +470,7 @@ export default function () {
               {filters.map((item, index) => (
                 <span
                   key={index}
-                  className={`${item == filterValue ? styles.active : ""}`}
+                  className={`${item == filterValue ? styles.active : ''}`}
                   onClick={() => {
                     setFilterDropdown(false);
                     setFilterValue(item);
@@ -478,22 +478,22 @@ export default function () {
                 >
                   {item}
                   {item == filterValue && (
-                    <img alt="" src={assetConstants.checkV5} />
+                    <img alt='' src={assetConstants.checkV5} />
                   )}
                 </span>
               ))}
             </div>
           )}
 
-          <img alt="" className={styles.search} src={assetConstants.search} />
+          <img alt='' className={styles.search} src={assetConstants.search} />
           <input
-            placeholder="Search"
+            placeholder='Search'
             value={search}
             onBlur={(e) => {
-              e.target.placeholder = "Search";
+              e.target.placeholder = 'Search';
             }}
             onFocus={(e) => {
-              (e.target as HTMLInputElement).placeholder = "";
+              (e.target as HTMLInputElement).placeholder = '';
             }}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -505,7 +505,7 @@ export default function () {
           tabs.map((tab, index) => (
             <div key={index} onClick={() => handleActiveTab(tab)}>
               <span className={styles.tab}>
-                <img alt="" src={tab.image} />
+                <img alt='' src={tab.image} />
                 {tab.name}
                 <span>{tab.value}</span>
               </span>
@@ -533,26 +533,26 @@ export default function () {
             <div className={styles.emptyContainer}>
               <span className={styles.emptyTitle}>
                 {activeTab.name == tabs[0].name
-                  ? "No Applications Yet"
-                  : "Nothing Yet"}
+                  ? 'No Applications Yet'
+                  : 'Nothing Yet'}
               </span>
               <span className={styles.emptyDescription}>
                 {activeTab.name == tabs[0].name
-                  ? "You haven’t applied to any roles yet."
-                  : "You haven’t archived any roles yet."}
+                  ? 'You haven’t applied to any roles yet.'
+                  : 'You haven’t archived any roles yet.'}
               </span>
               <span className={styles.emptyDescription}>
                 Once you do, they’ll appear here.
               </span>
               <button onClick={handleBrowseJob}>
                 Browse Job Openings
-                <img alt="arrow" src={assetConstants.arrow} />
+                <img alt='arrow' src={assetConstants.arrow} />
               </button>
             </div>
           </div>
         )
       ) : (
-        <Loader loaderType={"application"} loaderData={{ length: 10 }} />
+        <Loader loaderType={'application'} loaderData={{ length: 10 }} />
       )}
 
       {activeTab && (
@@ -571,14 +571,14 @@ export default function () {
                           ? styles.disabled
                           : activeInterviewIndex == index
                           ? styles.active
-                          : ""
+                          : ''
                       }`}
                       onClick={() => handleApplication(interview, index)}
                     >
                       {interview.organization &&
                         interview.organization.image && (
                           <img
-                            alt=""
+                            alt=''
                             className={styles.companyLogo}
                             src={interview.organization.image}
                           />
@@ -624,7 +624,7 @@ export default function () {
 
                       {interview.applicationStatus == interviewStatus[0] && (
                         <img
-                          alt="ellipsis"
+                          alt='ellipsis'
                           className={styles.menu}
                           src={assetConstants.ellipsis}
                           onClick={(e) => handleDropdown(e, index)}
@@ -653,12 +653,12 @@ export default function () {
                               <div className={styles.stepContainer} key={index}>
                                 <div className={styles.indicator}>
                                   <img
-                                    alt=""
+                                    alt=''
                                     src={
                                       assetConstants[
                                         processState(interview, step, true)
                                           .toLowerCase()
-                                          .replace(" ", "_")
+                                          .replace(' ', '_')
                                       ]
                                     }
                                   />
@@ -671,7 +671,7 @@ export default function () {
                                         styles[
                                           processState(interview, step, true)
                                             .toLowerCase()
-                                            .replace(" ", "_")
+                                            .replace(' ', '_')
                                         ]
                                       }`}
                                     >
@@ -684,7 +684,7 @@ export default function () {
                                         styles[
                                           processState(interview, step, true)
                                             .toLowerCase()
-                                            .replace(" ", "_")
+                                            .replace(' ', '_')
                                         ]
                                       }`}
                                     >
@@ -704,7 +704,7 @@ export default function () {
                                         styles[
                                           processState(interview, step)
                                             .toLowerCase()
-                                            .replace(" ", "_")
+                                            .replace(' ', '_')
                                         ]
                                       }`}
                                     />
@@ -716,7 +716,7 @@ export default function () {
                                       styles[
                                         processState(interview, step, true)
                                           .toLowerCase()
-                                          .replace(" ", "_")
+                                          .replace(' ', '_')
                                       ]
                                     }`}
                                   >
@@ -729,7 +729,7 @@ export default function () {
                                       styles[
                                         processState(interview, step, true)
                                           .toLowerCase()
-                                          .replace(" ", "_")
+                                          .replace(' ', '_')
                                       ]
                                     }`}
                                   >
@@ -740,7 +740,7 @@ export default function () {
                                       styles[
                                         processState(interview, step)
                                           .toLowerCase()
-                                          .replace(" ", "_")
+                                          .replace(' ', '_')
                                       ]
                                     }`}
                                   >
@@ -776,8 +776,8 @@ export default function () {
                                   processButtonState(interview).disabled ||
                                   (interview.retakeRequest &&
                                     interview.retakeRequest.reason)
-                                    ? "disabled"
-                                    : ""
+                                    ? 'disabled'
+                                    : ''
                                 }`}
                                 disabled={
                                   (interview.retakeRequest &&
@@ -800,7 +800,7 @@ export default function () {
                     {interview.applicationStatus == interviewStatus[1] && (
                       <div className={styles.updateContainer}>
                         <div className={styles.applicationUpdate}>
-                          <img alt="" src={assetConstants.userRejected} />
+                          <img alt='' src={assetConstants.userRejected} />
                           <div className={styles.textContainer}>
                             <span className={styles.title}>
                               Application Update
@@ -817,7 +817,7 @@ export default function () {
 
                         <div className={styles.tipsUpdate}>
                           <div className={styles.leftContainer}>
-                            <img alt="" src={assetConstants.hilight} />
+                            <img alt='' src={assetConstants.hilight} />
                             <div className={styles.textContainer}>
                               <span className={styles.title}>
                                 Jia’s tips for your next application:
@@ -849,10 +849,89 @@ export default function () {
                               </ul>
                             </div>
                           </div>
-                          <div className={styles.rightContainer}></div>
+                          <div className={styles.rightContainer}>
+                            <div className={styles.reminderContainer}>
+                              <div className={styles.dateContainer}>
+                                <svg
+                                  width='16'
+                                  height='16'
+                                  viewBox='0 0 12 12'
+                                  fill='none'
+                                  xmlns='http://www.w3.org/2000/svg'
+                                >
+                                  <path
+                                    d='M9.5 2H9V1H8V2H4V1H3V2H2.5C1.945 2 1.505 2.45 1.505 3L1.5 10C1.5 10.55 1.945 11 2.5 11H9.5C10.05 11 10.5 10.55 10.5 10V3C10.5 2.45 10.05 2 9.5 2ZM9.5 10H2.5V5H9.5V10ZM9.5 4H2.5V3H9.5V4ZM4.5 7H3.5V6H4.5V7ZM6.5 7H5.5V6H6.5V7ZM8.5 7H7.5V6H8.5V7ZM4.5 9H3.5V8H4.5V9ZM6.5 9H5.5V8H6.5V9ZM8.5 9H7.5V8H8.5V9Z'
+                                    fill='black'
+                                  />
+                                </svg>
+                                <div className={styles.dateTextContainer}>
+                                  <span className={styles.dateTitle}>
+                                    Date of last application:
+                                  </span>
+                                  <span className={styles.date}>
+                                    {interview.createdAt
+                                      ? new Date(
+                                          interview.createdAt
+                                        ).toLocaleDateString('en-US', {
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric',
+                                        })
+                                      : 'N/A'}
+                                    <img
+                                      alt='help-icon'
+                                      src='/icons/help-icon.svg'
+                                    />
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className={styles.dateContainer}>
+                                <div>
+                                  <svg
+                                    width='16'
+                                    height='16'
+                                    viewBox='0 0 12 12'
+                                    fill='none'
+                                    xmlns='http://www.w3.org/2000/svg'
+                                  >
+                                    <path
+                                      d='M7.5 0.75H4.5V1.75H7.5V0.75ZM5.5 7.25H6.5V4.25H5.5V7.25ZM9.515 3.945L10.225 3.235C10.01 2.98 9.775 2.74 9.52 2.53L8.81 3.24C8.035 2.62 7.06 2.25 6 2.25C3.515 2.25 1.5 4.265 1.5 6.75C1.5 9.235 3.51 11.25 6 11.25C8.49 11.25 10.5 9.235 10.5 6.75C10.5 5.69 10.13 4.715 9.515 3.945ZM6 10.25C4.065 10.25 2.5 8.685 2.5 6.75C2.5 4.815 4.065 3.25 6 3.25C7.935 3.25 9.5 4.815 9.5 6.75C9.5 8.685 7.935 10.25 6 10.25Z'
+                                      fill='black'
+                                    />
+                                  </svg>
+                                </div>
+                                <div className={styles.dateTextContainer}>
+                                  <span className={styles.dateTitle}>
+                                    You may reapply after:
+                                  </span>
+                                  <span className={styles.date}>
+                                    {interview.createdAt
+                                      ? (() => {
+                                          const reapplyDate = new Date(
+                                            interview.createdAt
+                                          );
+                                          reapplyDate.setDate(
+                                            reapplyDate.getDate() + 30
+                                          );
+                                          return reapplyDate.toLocaleDateString(
+                                            'en-US',
+                                            {
+                                              year: 'numeric',
+                                              month: 'long',
+                                              day: 'numeric',
+                                            }
+                                          );
+                                        })()
+                                      : 'N/A'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         <button onClick={() => handleArchive(interview)}>
-                          <img alt="" src={assetConstants.archiveV2} />
+                          <img alt='' src={assetConstants.archiveV2} />
                           Archive Application
                         </button>
                       </div>
@@ -876,14 +955,14 @@ export default function () {
                           ? styles.disabled
                           : activeInterviewIndex == index
                           ? styles.active
-                          : ""
+                          : ''
                       }`}
                       onClick={() => handleApplication(interview, index)}
                     >
                       {interview.organization &&
                         interview.organization.image && (
                           <img
-                            alt=""
+                            alt=''
                             className={styles.companyLogo}
                             src={interview.organization.image}
                           />
@@ -929,7 +1008,7 @@ export default function () {
 
                       {interview.applicationStatus == interviewStatus[0] && (
                         <img
-                          alt="ellipsis"
+                          alt='ellipsis'
                           className={styles.menu}
                           src={assetConstants.ellipsis}
                           onClick={(e) => handleDropdown(e, index)}
@@ -958,12 +1037,12 @@ export default function () {
                               <div className={styles.stepContainer} key={index}>
                                 <div className={styles.indicator}>
                                   <img
-                                    alt=""
+                                    alt=''
                                     src={
                                       assetConstants[
                                         processState(interview, step, true)
                                           .toLowerCase()
-                                          .replace(" ", "_")
+                                          .replace(' ', '_')
                                       ]
                                     }
                                   />
@@ -976,7 +1055,7 @@ export default function () {
                                         styles[
                                           processState(interview, step, true)
                                             .toLowerCase()
-                                            .replace(" ", "_")
+                                            .replace(' ', '_')
                                         ]
                                       }`}
                                     >
@@ -989,7 +1068,7 @@ export default function () {
                                         styles[
                                           processState(interview, step, true)
                                             .toLowerCase()
-                                            .replace(" ", "_")
+                                            .replace(' ', '_')
                                         ]
                                       }`}
                                     >
@@ -1009,7 +1088,7 @@ export default function () {
                                         styles[
                                           processState(interview, step)
                                             .toLowerCase()
-                                            .replace(" ", "_")
+                                            .replace(' ', '_')
                                         ]
                                       }`}
                                     />
@@ -1021,7 +1100,7 @@ export default function () {
                                       styles[
                                         processState(interview, step, true)
                                           .toLowerCase()
-                                          .replace(" ", "_")
+                                          .replace(' ', '_')
                                       ]
                                     }`}
                                   >
@@ -1034,7 +1113,7 @@ export default function () {
                                       styles[
                                         processState(interview, step, true)
                                           .toLowerCase()
-                                          .replace(" ", "_")
+                                          .replace(' ', '_')
                                       ]
                                     }`}
                                   >
@@ -1045,7 +1124,7 @@ export default function () {
                                       styles[
                                         processState(interview, step)
                                           .toLowerCase()
-                                          .replace(" ", "_")
+                                          .replace(' ', '_')
                                       ]
                                     }`}
                                   >
@@ -1081,8 +1160,8 @@ export default function () {
                                   processButtonState(interview).disabled ||
                                   (interview.retakeRequest &&
                                     interview.retakeRequest.reason)
-                                    ? "disabled"
-                                    : ""
+                                    ? 'disabled'
+                                    : ''
                                 }`}
                                 disabled={
                                   (interview.retakeRequest &&
@@ -1105,7 +1184,7 @@ export default function () {
                     {interview.applicationStatus == interviewStatus[1] && (
                       <div className={styles.updateContainer}>
                         <div className={styles.applicationUpdate}>
-                          <img alt="" src={assetConstants.userRejected} />
+                          <img alt='' src={assetConstants.userRejected} />
                           <div className={styles.textContainer}>
                             <span className={styles.title}>
                               Application Update
@@ -1122,7 +1201,7 @@ export default function () {
 
                         <div className={styles.tipsUpdate}>
                           <div className={styles.leftContainer}>
-                            <img alt="" src={assetConstants.hilight} />
+                            <img alt='' src={assetConstants.hilight} />
                             <div className={styles.textContainer}>
                               <span className={styles.title}>
                                 Jia’s tips for your next application:
@@ -1161,7 +1240,7 @@ export default function () {
                         className={`${styles.updateContainer} ${styles.cancelled}`}
                       >
                         <div className={styles.applicationUpdate}>
-                          <img alt="" src={assetConstants.trash} />
+                          <img alt='' src={assetConstants.trash} />
                           <div className={styles.textContainer}>
                             <span className={styles.title}>
                               Application Update
@@ -1196,11 +1275,11 @@ export default function () {
                               Reason for cancelling:
                             </span>
                             <span className={styles.detailsReason}>
-                              {interview.selectedReason != "Others" ? (
+                              {interview.selectedReason != 'Others' ? (
                                 interview.selectedReason
                               ) : (
                                 <>
-                                  {interview.selectedReason}:{" "}
+                                  {interview.selectedReason}:{' '}
                                   <span>{interview.cancelReason}</span>
                                 </>
                               )}

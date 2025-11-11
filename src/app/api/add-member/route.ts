@@ -29,7 +29,7 @@ const getInvitationEmailTemplate = (
       </p>
       
       <div style="text-align: center; margin: 30px 0;">
-        <a href="https://www.hellojia.ai" 
+        <a href="https://jia-whitecloak-production.up.railway.app"
            style="background: #4f04b9; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
           Click Here to Login
         </a>

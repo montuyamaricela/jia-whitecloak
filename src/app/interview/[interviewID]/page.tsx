@@ -13,7 +13,7 @@ export default function InterviewPage() {
       `${
         window.location.origin.includes("localhost")
           ? "/job-portal"
-          : "https://www.hellojia.ai"
+          : "https://jia-whitecloak-production.up.railway.app"
       }`;
     }
   }, []);

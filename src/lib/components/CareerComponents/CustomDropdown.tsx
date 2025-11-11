@@ -1,6 +1,18 @@
 'use client';
 import { useState, useRef, useEffect, useId } from 'react';
 
+/**
+ * Decodes HTML entities to their corresponding characters
+ * @param {string} text - Text containing HTML entities (e.g., "&lt;", "&gt;", "&amp;")
+ * @returns {string} Decoded text (e.g., "<", ">", "&")
+ */
+function decodeHTMLEntities(text) {
+  if (!text) return text;
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.value;
+}
+
 export default function CustomDropdown(props) {
   const {
     onSelectSetting,
@@ -12,6 +24,8 @@ export default function CustomDropdown(props) {
     showSearch = false,
     showAvatar = false,
     hasError = false,
+    borderColor,
+    hideCheckmark = false,
   } = props;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,7 +75,11 @@ export default function CustomDropdown(props) {
           width: '100%',
           padding: '10px 14px',
           background: '#FFFFFF',
-          border: hasError ? '1px solid #DC6803' : '1px solid #E9EAEB',
+          border: hasError
+            ? '1px solid #DC6803'
+            : borderColor
+            ? `1px solid ${borderColor}`
+            : '1px solid #E9EAEB',
           borderRadius: '8px',
           boxShadow: '0px 1px 2px 0px rgba(10, 13, 18, 0.05)',
           display: 'flex',
@@ -109,7 +127,7 @@ export default function CustomDropdown(props) {
           {(() => {
             const selectedSetting = settingList.find(
               (setting) => setting.name === screeningSetting
-            )
+            );
             if (selectedSetting?.icon) {
               // Check if icon is a React element
               if (
@@ -117,12 +135,12 @@ export default function CustomDropdown(props) {
                 selectedSetting.icon !== null &&
                 '$$typeof' in selectedSetting.icon
               ) {
-                return selectedSetting.icon
+                return selectedSetting.icon;
               }
               // Otherwise treat as className string
-              return <i className={selectedSetting.icon}></i>
+              return <i className={selectedSetting.icon}></i>;
             }
-            return null
+            return null;
           })()}
           <span
             style={{
@@ -131,7 +149,7 @@ export default function CustomDropdown(props) {
               whiteSpace: 'nowrap',
             }}
           >
-            {screeningSetting?.replace('_', ' ') || placeholder}
+            {decodeHTMLEntities(screeningSetting?.replace('_', ' ')) || placeholder}
           </span>
         </div>
         <svg
@@ -162,7 +180,7 @@ export default function CustomDropdown(props) {
             position: 'absolute',
             top: '100%',
             left: 0,
-            marginTop: '4px',
+            marginTop: hideCheckmark ? '0' : '4px',
             width: showSearch ? '317px' : '348px',
             minWidth: showSearch ? '317px' : '348px',
             background: '#FFFFFF',
@@ -170,10 +188,10 @@ export default function CustomDropdown(props) {
             borderRadius: '8px',
             boxShadow:
               '0px 4px 6px -2px rgba(10, 13, 18, 0.03), 0px 12px 16px -4px rgba(10, 13, 18, 0.08)',
-            padding: showSearch ? '0' : '8px',
+            padding: hideCheckmark ? '0' : showSearch ? '0' : '8px',
             zIndex: 10000, // Even higher to ensure it's above everything
-            maxHeight: showSearch ? 'none' : '400px',
-            overflowY: 'auto',
+            // maxHeight: showSearch ? 'none' : '400px',
+            // overflowY: 'auto',
           }}
         >
           {showSearch && (
@@ -252,7 +270,7 @@ export default function CustomDropdown(props) {
           )}
           <div
             style={{
-              padding: showSearch ? '4px 0px' : '0',
+              padding: hideCheckmark ? '0' : showSearch ? '4px 0px' : '0',
               maxHeight: showSearch ? '280px' : 'none',
               overflowY: showSearch ? 'auto' : 'visible',
             }}
@@ -278,8 +296,22 @@ export default function CustomDropdown(props) {
                     display: 'flex',
                     flexDirection: showAvatar ? 'row' : 'column',
                     gap: showAvatar ? '8px' : '4px',
-                    alignItems: showAvatar ? 'center' : 'stretch',
+                    alignItems: showAvatar
+                      ? 'center'
+                      : hideCheckmark
+                      ? 'center'
+                      : 'stretch',
                     textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (hideCheckmark) {
+                      e.currentTarget.style.background = '#F8F9FC';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (hideCheckmark) {
+                      e.currentTarget.style.background = 'transparent';
+                    }
                   }}
                 >
                   {showAvatar && (
@@ -333,7 +365,7 @@ export default function CustomDropdown(props) {
                             color: '#181D27',
                           }}
                         >
-                          {setting.name?.replace('_', ' ')}
+                          {decodeHTMLEntities(setting.name?.replace('_', ' '))}
                         </span>
                         {setting.email && (
                           <span
@@ -353,93 +385,111 @@ export default function CustomDropdown(props) {
                   )}
                   {!showAvatar && (
                     <>
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'row',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: '8px',
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: '8px',
-                            flex: 1,
-                          }}
-                        >
-                          {setting.icon && (
-                            <div style={{ flexShrink: 0 }}>
-                              {typeof setting.icon === 'object' &&
-                              setting.icon !== null &&
-                              '$$typeof' in setting.icon ? (
-                                setting.icon
-                              ) : (
-                                <i className={setting.icon}></i>
-                              )}
-                            </div>
-                          )}
-                          <span
-                            style={{
-                              fontFamily: "'Satoshi', sans-serif",
-                              fontSize: '14px',
-                              fontWeight: isSelected ? 700 : 500,
-                              lineHeight: '1.4285714285714286em',
-                              color: isSelected ? '#181D27' : '#414651',
-                            }}
-                          >
-                            {setting.name?.replace('_', ' ')}
-                          </span>
-                        </div>
-                        {isSelected && (
-                          <svg
-                            width='20'
-                            height='20'
-                            viewBox='0 0 20 20'
-                            fill='none'
-                            xmlns='http://www.w3.org/2000/svg'
-                            style={{ flexShrink: 0 }}
-                          >
-                            <path
-                              d='M16.6667 5L7.50004 14.1667L3.33337 10'
-                              stroke={`url(#checkGradient-${gradientId})`}
-                              strokeWidth='1.67'
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                            />
-                            <defs>
-                              <linearGradient
-                                id={`checkGradient-${gradientId}`}
-                                x1='3.33337'
-                                y1='5'
-                                x2='16.6667'
-                                y2='14.1667'
-                                gradientUnits='userSpaceOnUse'
-                              >
-                                <stop stopColor='#9FCAED' />
-                                <stop offset='0.34' stopColor='#CEB6DA' />
-                                <stop offset='0.67' stopColor='#EBACC9' />
-                                <stop offset='1' stopColor='#FCCEC0' />
-                              </linearGradient>
-                            </defs>
-                          </svg>
-                        )}
-                      </div>
-                      {showSupportingText && setting.description && (
+                      {hideCheckmark ? (
                         <span
                           style={{
                             fontFamily: "'Satoshi', sans-serif",
-                            fontSize: '14px',
+                            fontSize: '16px',
                             fontWeight: 500,
-                            lineHeight: '1.4285714285714286em',
-                            color: '#717680',
+                            lineHeight: '1.5em',
+                            color: '#181D27',
+                            textAlign: 'left',
+                            width: '100%',
                           }}
                         >
-                          {setting.description}
+                          {decodeHTMLEntities(setting.name?.replace('_', ' '))}
                         </span>
+                      ) : (
+                        <>
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              gap: '8px',
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: '8px',
+                                flex: 1,
+                              }}
+                            >
+                              {setting.icon && (
+                                <div style={{ flexShrink: 0 }}>
+                                  {typeof setting.icon === 'object' &&
+                                  setting.icon !== null &&
+                                  '$$typeof' in setting.icon ? (
+                                    setting.icon
+                                  ) : (
+                                    <i className={setting.icon}></i>
+                                  )}
+                                </div>
+                              )}
+                              <span
+                                style={{
+                                  fontFamily: "'Satoshi', sans-serif",
+                                  fontSize: '14px',
+                                  fontWeight: isSelected ? 700 : 500,
+                                  lineHeight: '1.4285714285714286em',
+                                  color: isSelected ? '#181D27' : '#414651',
+                                }}
+                              >
+                                {decodeHTMLEntities(setting.name?.replace('_', ' '))}
+                              </span>
+                            </div>
+                            {isSelected && (
+                              <svg
+                                width='20'
+                                height='20'
+                                viewBox='0 0 20 20'
+                                fill='none'
+                                xmlns='http://www.w3.org/2000/svg'
+                                style={{ flexShrink: 0 }}
+                              >
+                                <path
+                                  d='M16.6667 5L7.50004 14.1667L3.33337 10'
+                                  stroke={`url(#checkGradient-${gradientId})`}
+                                  strokeWidth='1.67'
+                                  strokeLinecap='round'
+                                  strokeLinejoin='round'
+                                />
+                                <defs>
+                                  <linearGradient
+                                    id={`checkGradient-${gradientId}`}
+                                    x1='3.33337'
+                                    y1='5'
+                                    x2='16.6667'
+                                    y2='14.1667'
+                                    gradientUnits='userSpaceOnUse'
+                                  >
+                                    <stop stopColor='#9FCAED' />
+                                    <stop offset='0.34' stopColor='#CEB6DA' />
+                                    <stop offset='0.67' stopColor='#EBACC9' />
+                                    <stop offset='1' stopColor='#FCCEC0' />
+                                  </linearGradient>
+                                </defs>
+                              </svg>
+                            )}
+                          </div>
+                          {showSupportingText && setting.description && (
+                            <span
+                              style={{
+                                fontFamily: "'Satoshi', sans-serif",
+                                fontSize: '14px',
+                                fontWeight: 500,
+                                lineHeight: '1.4285714285714286em',
+                                color: '#717680',
+                              }}
+                            >
+                              {setting.description}
+                            </span>
+                          )}
+                        </>
                       )}
                     </>
                   )}

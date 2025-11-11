@@ -4,7 +4,7 @@ import "@/lib/styles/common/global.scss";
 
 export const metadata = {
   alternates: {
-    canonical: "https://www.hellojia.ai/whitecloak",
+    canonical: "https://jia-whitecloak-production.up.railway.app/whitecloak",
   },
   description: "Whitecloak Careers",
   title: "Whitecloak Careers",

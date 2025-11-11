@@ -33,7 +33,7 @@ export default function ManageCareerOverviewCard(props: any) {
               className="btn btn-default btn-sm"
               onClick={() => {
                 navigator.clipboard.writeText(
-                  `https://hellojia.ai/applicant/job-openings/${jobID}`
+                  `https://jia-whitecloak-production.up.railway.app/applicant/job-openings/${jobID}`
                 );
                 successToast(
                   "Public Job Link Copied to Clipboard",
@@ -50,7 +50,7 @@ export default function ManageCareerOverviewCard(props: any) {
               className="btn btn-default btn-sm"
               onClick={() => {
                 navigator.clipboard.writeText(
-                  `https://hellojia.ai/whitecloak/job-openings/${jobID}`
+                  `https://jia-whitecloak-production.up.railway.app/whitecloak/job-openings/${jobID}`
                 );
                 successToast(
                   "WC Careers AI | Public Job Link Copied to Clipboard",

@@ -11,7 +11,7 @@ export default function () {
         // Applicant dashboard
         window.location.href = window.location.origin.includes("localhost")
           ? "/job-portal"
-          : "https://www.hellojia.ai";
+          : "https://jia-whitecloak-production.up.railway.app";
       }
     }
   }, []);

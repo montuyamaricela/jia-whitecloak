@@ -47,7 +47,7 @@ export default function () {
             `${
               window.location.origin.includes("localhost")
                 ? "/job-portal"
-                : `https://www.hellojia.ai`
+                : `https://jia-whitecloak-production.up.railway.app`
             }`;
           }
         });
@@ -65,7 +65,7 @@ export default function () {
           `${
             window.location.origin.includes("localhost")
               ? "/job-portal"
-              : `https://www.hellojia.ai`
+              : `https://jia-whitecloak-production.up.railway.app`
           }`;
         }
       });
@@ -126,7 +126,7 @@ export default function () {
         if (res.isConfirmed) {
           window.location.href = window.location.origin.includes("localhost")
             ? "/job-portal"
-            : "https://www.hellojia.ai";
+            : "https://jia-whitecloak-production.up.railway.app";
         }
       });
 
